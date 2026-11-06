@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>내 발표 준비</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="pres.css?v=2">
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>📝 내 발표 준비</h1><p id="who"></p></div>
+  <div id="nav" class="nav"></div>
+  <div id="content"><div class="loading-state">불러오는 중...</div></div>
+</div>
+<div id="toastBox"></div>
+
+<script src="session.js?v=1"></script>
+<script>
+const me = requireLogin();
+if (me && me.isTeacher) { alert('교사 계정은 전체 현황에서 볼 수 있어요.'); location.href = 'board.html'; }
+
+// 말하기 속도 기준: 공백 포함 약 300자/분 (3분 ≈ 900자). 적정 범위 700~1,050자
+const CPM = 300, MIN_OK = 700, MAX_OK = 1050;
+let base = '', pick = null, saved = null, dirty = false;
+
+function toast(msg) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  document.getElementById('toastBox').appendChild(el); setTimeout(() => el.remove(), 2400);
+}
+
+function fmtTime(chars) {
+  const sec = Math.round(chars / CPM * 60);
+  return Math.floor(sec / 60) + '분 ' + String(sec % 60).padStart(2, '0') + '초';
+}
+
+function updateCounter() {
+  const v = document.getElementById('script').value;
+  const n = v.length, n2 = v.replace(/\s/g, '').length;
+  let cls = 'short', label = '조금 짧아요';
+  if (n >= MIN_OK && n <= MAX_OK) { cls = 'ok'; label = '3분 발표에 적당해요 👍'; }
+  else if (n > MAX_OK) { cls = 'long'; label = '조금 길어요'; }
+  if (n === 0) label = '대본을 써 보세요';
+  document.getElementById('counter').innerHTML =
+    `<span><b>${n.toLocaleString()}</b>자 <span style="color:var(--text-muted);font-size:.76rem">(공백 제외 ${n2.toLocaleString()}자)</span></span>` +
+    `<span>예상 발표 시간 약 <b style="font-size:.95rem">${fmtTime(n)}</b></span><span class="st ${cls}">${label}</span>`;
+  dirty = n !== (saved ? (saved.script || '').length : 0) || v !== (saved ? saved.script || '' : '') ||
+    document.getElementById('canva').value.trim() !== (saved ? saved.canva || '' : '');
+  document.getElementById('dirtyNote').textContent = dirty ? '✏️ 저장하지 않은 내용이 있어요' : '';
+}
+
+function renderSaved() {
+  const el = document.getElementById('savedBox');
+  if (!saved || (!saved.script && !saved.canva)) { el.style.display = 'none'; return; }
+  const d = new Date(saved.updatedAt);
+  const ts = `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+  el.style.display = 'block';
+  el.innerHTML = `💾 <b>서버에 저장된 내용</b> (${ts})<br>
+    · 대본 ${(saved.script || '').length.toLocaleString()}자 ${saved.script ? '✔' : '— 아직 없음'}<br>
+    · 캔바 ${saved.canva ? '✔ <a href="' + esc(saved.canva) + '" target="_blank" rel="noopener">' + esc(saved.canva) + '</a>' : '— 아직 없음'}`;
+}
+
+window.save = async function () {
+  const script = document.getElementById('script').value;
+  let canva = document.getElementById('canva').value.trim();
+  const err = document.getElementById('err');
+  err.classList.remove('show');
+  if (canva) {
+    if (!/^https?:\/\//i.test(canva)) canva = 'https://' + canva;
+    if (!/canva\.com|canva\.link/i.test(canva) && !confirm('캔바 링크가 아닌 것 같아요. 그래도 저장할까요?')) return;
+  }
+  const btn = document.getElementById('saveBtn'); btn.disabled = true; btn.textContent = '저장 중...';
+  const rec = { script, canva, updatedAt: Date.now() };
+  try {
+    await dbPut(base + '/scripts/' + me.id, rec);
+    await dbPut(base + '/status/' + me.id, { s: script.length, c: !!canva, t: rec.updatedAt });
+    saved = rec;
+    document.getElementById('canva').value = canva;
+    renderSaved(); updateCounter();
+    toast('✅ 저장했어요!');
+  } catch (e) { err.textContent = e.message; err.classList.add('show'); }
+  finally { btn.disabled = false; btn.textContent = '💾 저장하기'; }
+};
+
+function render() {
+  const el = document.getElementById('content');
+  if (!pick) {
+    el.innerHTML = '<div class="card" style="text-align:center"><h2>아직 발표 주제를 고르지 않았어요</h2><p class="hint">먼저 주제를 선택하면 대본과 캔바 링크를 올릴 수 있어요.</p><a class="btn" style="display:block;text-decoration:none;text-align:center" href="pick.html">📌 주제 고르러 가기</a></div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="card topic-card mine" style="padding:16px">
+      <div class="tc-top"><span class="tag ${pick.unit === '별과 우주' ? 'a' : 'b'}">${esc(pick.unit)}</span>
+        ${pick.kind === 'custom' ? '<span class="tag" style="background:#f3e8ff;color:#7b2cbf">직접 작성</span>' : ''}</div>
+      <div class="chips">${String(pick.kw).split(',').map(k => '<span class="chip">' + esc(k.trim()) + '</span>').join('')}</div>
+      <div class="tc-topic">${esc(pick.topic)}</div>
+      <div id="dupNote"></div>
+      <a href="pick.html" style="font-size:.76rem;color:var(--text-muted)">주제 바꾸기</a>
+    </div>
+
+    <div class="card">
+      <h2>📄 발표 대본</h2>
+      <p class="hint">내 주제에 대해 발표할 내용을 써 보세요. 쓰는 중에는 자동 저장되지 않으니 꼭 <b>저장하기</b>를 눌러 주세요.</p>
+      <textarea id="script" style="min-height:260px;line-height:1.7" placeholder="안녕하세요, 저는 ○○○입니다. 오늘 제가 소개할 주제는..."></textarea>
+      <div class="counter" id="counter"></div>
+      <div class="small-note">💡 3분 발표는 공백 포함 약 700~1,000자 정도가 적당해요. (1분에 300자 안팎으로 말하는 속도 기준이며, 슬라이드를 보며 설명하는 시간을 생각하면 조금 짧아도 괜찮아요.)</div>
+    </div>
+
+    <div class="card">
+      <h2>🎨 캔바 링크</h2>
+      <p class="hint">캔바에서 [공유] → [링크 복사]를 하고, 링크 권한을 <b>“링크가 있는 모든 사용자(보기 가능)”</b>로 설정한 뒤 붙여넣어 주세요.</p>
+      <input type="text" id="canva" placeholder="https://www.canva.com/design/...">
+    </div>
+
+    <div class="error-msg" id="err"></div>
+    <div id="dirtyNote" style="font-size:.78rem;color:#e8590c;text-align:center;min-height:1.2em"></div>
+    <button class="btn" id="saveBtn" style="margin-top:4px" onclick="save()">💾 저장하기</button>
+    <div class="savebox" id="savedBox" style="display:none"></div>`;
+  document.getElementById('script').value = saved ? saved.script || '' : '';
+  document.getElementById('canva').value = saved ? saved.canva || '' : '';
+  document.getElementById('script').addEventListener('input', updateCounter);
+  document.getElementById('canva').addEventListener('input', updateCounter);
+  renderSaved(); updateCounter();
+}
+
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+(async function init() {
+  document.getElementById('who').textContent = whoLabel(me);
+  renderNav('my');
+  try {
+    base = await basePath();
+    const [p, s, all] = await Promise.all([dbGet(base + '/picks/' + me.id), dbGet(base + '/scripts/' + me.id), dbGet(base + '/picks')]);
+    pick = p; saved = s;
+    render();
+    if (pick && pick.no) {
+      const dups = Object.values(all || {}).filter(o => o && o.id !== me.id && String(o.grade) === String(me.grade) && String(o.ban) === String(me.ban) && o.no === pick.no);
+      if (dups.length) document.getElementById('dupNote').innerHTML =
+        `<div class="dup">⚠️ 같은 반 <b>${dups.map(d => esc(d.name)).join(', ')}</b> 학생도 이 주제를 골랐어요. <b>월요일 가위바위보</b> 결과에 따라 주제가 바뀔 수 있어요. (써 둔 대본은 그대로 남아요)</div>`;
+    }
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="empty-state">불러오지 못했어요. 새로고침해 주세요.</div>';
+  }
+})();
+</script>
+</body>
+</html>

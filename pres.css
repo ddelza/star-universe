@@ -1,0 +1,53 @@
+/* 중3 과학 발표회 추가 스타일 (common.css 위에 얹음) */
+.nav { display: flex; gap: 6px; overflow-x: auto; margin: -8px 0 16px; padding: 4px 0; }
+.nav a { flex: 1 1 auto; text-align: center; padding: 9px 6px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-muted); font-size: 0.74rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.nav a.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.notice { background: #fff8e6; border-left: 4px solid #f0b429; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; line-height: 1.6; margin-bottom: 14px; }
+.notice.warn { background: #fff4e6; border-left-color: #ff922b; }
+
+.tag { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.tag.a { background: #e7ecff; color: #3b5bdb; }
+.tag.b { background: #fff0db; color: #c26a00; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+.chip { font-size: 0.72rem; background: #f1f3f5; color: #555; padding: 2px 8px; border-radius: 6px; }
+
+.topic-card { background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.topic-card.mine { box-shadow: 0 0 0 2px var(--accent), 0 1px 3px rgba(0,0,0,0.06); }
+.tc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.tc-no { font-size: 0.74rem; color: var(--text-muted); font-weight: 700; }
+.tc-topic { font-size: 0.92rem; line-height: 1.55; font-weight: 600; }
+.dup { font-size: 0.78rem; color: #c26a00; background: #fff4e6; border-radius: 8px; padding: 6px 10px; margin-top: 8px; line-height: 1.5; }
+.mine-badge { font-size: 0.78rem; color: var(--accent); font-weight: 700; margin-top: 8px; }
+.pick-btn { width: 100%; margin-top: 10px; padding: 10px; border: none; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.86rem; cursor: pointer; }
+.pick-btn:active { opacity: .8; }
+
+.searchbox { margin-bottom: 12px; }
+.count-line { font-size: 0.76rem; color: var(--text-muted); margin: 0 2px 8px; }
+
+.counter { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: 0.86rem; margin-top: 6px; }
+.counter b { font-size: 1.1rem; }
+.counter .st { font-size: 0.78rem; font-weight: 700; }
+.counter .st.short { color: #e8590c; }
+.counter .st.ok { color: #2f9e44; }
+.counter .st.long { color: #c92a2a; }
+.small-note { font-size: 0.72rem; color: var(--text-muted); line-height: 1.6; margin-top: 6px; }
+.savebox { background: #f6f8fc; border: 1px solid #e1e6f2; border-radius: 10px; padding: 10px 12px; font-size: 0.8rem; margin-top: 12px; line-height: 1.6; }
+.savebox a { color: var(--accent); word-break: break-all; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #212529; color: #fff; padding: 11px 18px; border-radius: 999px; font-size: 0.85rem; z-index: 50; max-width: 90%; text-align: center; }
+
+.stu-row { background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 0.86rem; line-height: 1.55; }
+.stu-row.none { background: transparent; box-shadow: none; border: 1.5px dashed var(--border); color: var(--text-muted); }
+.stu-name { font-weight: 800; margin-bottom: 2px; }
+.stu-name .num { color: var(--text-muted); font-weight: 600; font-size: 0.76rem; margin-right: 4px; }
+.state { display: inline-block; font-size: 0.68rem; padding: 1px 7px; border-radius: 6px; margin-left: 4px; font-weight: 700; }
+.state.y { background: #e6f7ec; color: #2f9e44; }
+.state.n { background: #f1f3f5; color: #adb5bd; }
+.dup-box { background: #fff4e6; border: 1.5px solid #ffc078; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.82rem; line-height: 1.6; }
+.dup-box b { color: #c26a00; }
+.summary { display: flex; gap: 8px; margin-bottom: 14px; }
+.summary div { flex: 1; background: var(--surface); border-radius: 12px; padding: 10px; text-align: center; font-size: 0.74rem; color: var(--text-muted); }
+.summary b { display: block; font-size: 1.3rem; color: var(--accent); }
+select.sel { width: 100%; padding: 11px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.95rem; margin-bottom: 12px; background: #fff; }
+.radio-row { display: flex; gap: 8px; margin-bottom: 4px; }

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전체 주제 현황</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="pres.css?v=2">
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>👀 반별 발표 주제 현황</h1><p id="who"></p></div>
+  <div id="nav" class="nav"></div>
+
+  <select class="sel" id="banSel" onchange="onBan()"></select>
+  <div id="content"><div class="loading-state">불러오는 중...</div></div>
+</div>
+
+<script src="topics.js?v=1"></script>
+<script src="session.js?v=1"></script>
+<script>
+const me = requireLogin();
+let roster = [], picks = {}, status = {}, scripts = null, curKey = '', base = '';
+
+function render() {
+  const [g, b] = curKey.split('-');
+  const list = roster.filter(s => String(s.grade) === g && String(s.ban) === b).sort((x, y) => x.num - y.num);
+  const clsPicks = Object.values(picks).filter(p => p && String(p.grade) === g && String(p.ban) === b);
+  const done = list.filter(s => picks[s.id]).length;
+
+  // 겹치는 주제 (같은 반, 같은 번호 주제)
+  const byNo = {};
+  clsPicks.forEach(p => { if (p.no) (byNo[p.no] = byNo[p.no] || []).push(p); });
+  const dups = Object.entries(byNo).filter(([, v]) => v.length > 1);
+  const dupIds = new Set(dups.flatMap(([, v]) => v.map(p => p.id)));
+
+  let html = `<div class="summary"><div><b>${list.length}</b>학생</div><div><b>${done}</b>주제 선택</div><div><b>${dups.length}</b>겹치는 주제</div></div>`;
+
+  if (dups.length) {
+    html += `<div class="dup-box">⚠️ <b>겹치는 주제</b> — 월요일에 가위바위보로 정해요<br>` +
+      dups.map(([no, v]) => `· #${no} ${esc(TOPICS[no - 1].topic)}<br>&nbsp;&nbsp;→ <b>${v.map(p => esc(p.name)).join(', ')}</b>`).join('<br>') + `</div>`;
+  }
+
+  html += list.map(s => {
+    const p = picks[s.id];
+    if (!p) return `<div class="stu-row none"><div class="stu-name"><span class="num">${s.num}번</span>${esc(s.name)}</div>아직 주제를 고르지 않았어요</div>`;
+    const st = status[s.id] || {};
+    const sc = scripts && scripts[s.id];
+    return `<div class="stu-row">
+      <div class="stu-name"><span class="num">${s.num}번</span>${esc(s.name)}
+        ${dupIds.has(s.id) ? '<span class="state" style="background:#fff4e6;color:#c26a00">겹침</span>' : ''}
+        <span class="state ${st.s ? 'y' : 'n'}">📝 대본${st.s ? ' ' + st.s.toLocaleString() + '자' : ''}</span>
+        <span class="state ${st.c ? 'y' : 'n'}">🎨 캔바</span></div>
+      <div style="margin:4px 0 2px"><span class="tag ${p.unit === '별과 우주' ? 'a' : 'b'}">${esc(p.unit)}</span>
+        ${p.kind === 'custom' ? '<span class="tag" style="background:#f3e8ff;color:#7b2cbf">직접 작성</span>' : ''}</div>
+      <div class="chips">${String(p.kw).split(',').map(k => '<span class="chip">' + esc(k.trim()) + '</span>').join('')}</div>
+      <div style="font-weight:600">${esc(p.topic)}</div>
+      ${me.isTeacher && sc ? `<div class="small-note" style="margin-top:8px">${sc.canva ? '<a href="' + esc(sc.canva) + '" target="_blank" rel="noopener">🎨 캔바 열기</a>' : ''}${sc.script ? '<details><summary>📄 대본 보기</summary><div style="white-space:pre-wrap;color:var(--text)">' + esc(sc.script) + '</div></details>' : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // 명단에 없는데 선택한 사람(드문 경우)
+  const extra = clsPicks.filter(p => !list.some(s => s.id === p.id));
+  html += extra.map(p => `<div class="stu-row"><div class="stu-name">${esc(p.name)}</div>${esc(p.topic)}</div>`).join('');
+
+  document.getElementById('content').innerHTML = list.length ? html : '<div class="empty-state">이 반의 학생 명단이 없어요.</div>';
+}
+
+window.onBan = function () { curKey = document.getElementById('banSel').value; render(); };
+
+(async function init() {
+  document.getElementById('who').textContent = whoLabel(me);
+  renderNav('board');
+  try {
+    const cfg = await getCfg();
+    base = await basePath();
+    const jobs = [dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/status')];
+    if (me.isTeacher) jobs.push(dbGet(base + '/scripts'));
+    const [r, p, st, sc] = await Promise.all(jobs);
+    roster = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v));
+    picks = p || {}; status = st || {}; scripts = sc || null;
+    let keys = [...new Set(roster.map(s => s.grade + '-' + s.ban))];
+    if (!me.isTeacher) keys = keys.filter(k => k.split('-')[0] === String(me.grade));
+    keys.sort((a, b) => { const [ga, ba] = a.split('-').map(Number), [gb, bb] = b.split('-').map(Number); return ga - gb || ba - bb; });
+    const mine = me.isTeacher ? '' : me.grade + '-' + me.ban;
+    document.getElementById('banSel').innerHTML = keys.map(k => {
+      const [g, c] = k.split('-');
+      return `<option value="${k}">${g}학년 ${c}반${k === mine ? ' (우리 반)' : ''}</option>`;
+    }).join('');
+    curKey = keys.includes(mine) ? mine : keys[0];
+    document.getElementById('banSel').value = curKey;
+    render();
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="empty-state">불러오지 못했어요. 새로고침해 주세요.</div>';
+  }
+})();
+</script>
+</body>
+</html>
