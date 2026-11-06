@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>발표 주제 고르기</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=2">
+<link rel="stylesheet" href="pres.css?v=3">
 </head>
 <body>
 <div class="wrap">
@@ -24,6 +24,7 @@
   <div id="listArea">
     <input type="text" id="q" class="searchbox" placeholder="🔍 키워드나 주제로 검색 (예: 블랙홀, AI)">
     <div class="count-line" id="countLine"></div>
+    <div class="small-note" style="margin:-4px 2px 10px"><span class="taken-ribbon" style="font-size:.66rem">🙋 선택됨</span> 표시가 있는 주제는 같은 반 친구가 이미 고른 주제예요.</div>
     <div id="list"><div class="loading-state">불러오는 중...</div></div>
   </div>
 
@@ -103,11 +104,11 @@ function renderList() {
   document.getElementById('list').innerHTML = items.length ? items.map(t => {
     const mineNow = picks[me.id] && picks[me.id].no === t.no;
     const others = (byT[t.no] || []).filter(p => p.id !== me.id);
-    return `<div class="topic-card ${mineNow ? 'mine' : ''}">
-      <div class="tc-top"><span class="tc-no">#${t.no}</span><span class="tag ${t.unit === '별과 우주' ? 'a' : 'b'}">${esc(t.unit)}</span></div>
+    return `<div class="topic-card ${mineNow ? 'mine' : others.length ? 'taken' : ''}">
+      <div class="tc-top"><span class="tc-no">#${t.no}</span><span class="tag ${t.unit === '별과 우주' ? 'a' : 'b'}">${esc(t.unit)}</span>${others.length ? '<span class="taken-ribbon">🙋 ' + (others.length > 1 ? others.length + '명' : '1명') + ' 선택됨</span>' : ''}</div>
       <div class="tc-topic">${esc(t.topic)}</div>
       <div class="chips">${t.kw.split(',').map(k => '<span class="chip">' + esc(k.trim()) + '</span>').join('')}</div>
-      ${others.length ? `<div class="dup">⚠️ 우리 반 ${others.map(o => esc(o.name)).join(', ')} 선택 중</div>` : ''}
+      ${others.length ? `<div class="dup">⚠️ 우리 반 <b>${others.map(o => esc(o.name)).join(', ')}</b> 학생이 이미 선택했어요. 겹치면 월요일에 가위바위보!</div>` : ''}
       ${mineNow ? '<div class="mine-badge">✅ 내가 선택한 주제</div>' : `<button class="pick-btn" onclick="choose(${t.no})">이 주제 선택</button>`}
     </div>`;
   }).join('') : '<div class="empty-state">검색 결과가 없어요.</div>';

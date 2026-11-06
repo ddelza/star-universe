@@ -51,3 +51,14 @@
 .summary b { display: block; font-size: 1.3rem; color: var(--accent); }
 select.sel { width: 100%; padding: 11px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.95rem; margin-bottom: 12px; background: #fff; }
 .radio-row { display: flex; gap: 8px; margin-bottom: 4px; }
+
+/* 수행평가 안내 표 */
+.rubric { width: 100%; border-collapse: collapse; font-size: 0.8rem; line-height: 1.6; }
+.rubric th, .rubric td { border: 1px solid #e1e6f2; padding: 8px 9px; text-align: left; vertical-align: top; }
+.rubric th { background: #f2f4fa; font-size: 0.76rem; }
+.rubric td:first-child { width: 32%; background: #fafbfe; }
+.pt { display: inline-block; font-size: 0.68rem; background: var(--accent); color: #fff; border-radius: 6px; padding: 0 6px; margin-top: 2px; }
+
+/* 같은 반 친구가 이미 고른 주제 표시 */
+.topic-card.taken { background: #fffaf2; box-shadow: 0 0 0 2px #ffc078, 0 1px 3px rgba(0,0,0,0.06); }
+.taken-ribbon { display: inline-block; background: #ff922b; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 2px 9px; border-radius: 999px; }
