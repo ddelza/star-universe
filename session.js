@@ -52,6 +52,16 @@
   };
   window.basePath = async function () { return 'years/' + (await getCfg()).year + '/sciPres'; };
 
+  // ---- 페이지 이동 링크에 빌드 번호를 붙여 오래된 캐시 페이지가 뜨지 않게 함 ----
+  var BUILD = '8';
+  window.bustLinks = function () {
+    document.querySelectorAll('a[href]').forEach(function (a) {
+      var h = a.getAttribute('href');
+      if (/^[a-z]+\.html$/.test(h)) a.setAttribute('href', h + '?v=' + BUILD);
+    });
+  };
+  document.addEventListener('DOMContentLoaded', window.bustLinks);
+
   // ---- 상단 메뉴 ----
   window.renderNav = function (active) {
     var s = window.getStudent();
@@ -62,5 +72,6 @@
     el.innerHTML = items.map(function (i) {
       return '<a href="' + i[0] + '"' + (i[2] === active ? ' class="on"' : '') + '>' + i[1] + '</a>';
     }).join('');
+    window.bustLinks();
   };
 })();
