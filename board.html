@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>전체 주제 현황</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=3">
+<link rel="stylesheet" href="pres.css?v=6">
 </head>
 <body>
 <div class="wrap">
@@ -17,7 +17,7 @@
 </div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=1"></script>
+<script src="session.js?v=2"></script>
 <script>
 const me = requireLogin();
 let roster = [], picks = {}, status = {}, scripts = null, curKey = '', base = '';
@@ -50,6 +50,7 @@ function render() {
       <div class="stu-name"><span class="num">${s.num}번</span>${esc(s.name)}
         ${dupIds.has(s.id) ? '<span class="state" style="background:#fff4e6;color:#c26a00">겹침</span>' : ''}
         <span class="state ${st.s ? 'y' : 'n'}">📝 대본${st.s ? ' ' + st.s.toLocaleString() + '자' : ''}</span>
+        <span class="state ${st.o ? 'y' : 'n'}">📚 출처</span>
         <span class="state ${st.c ? 'y' : 'n'}">🎨 캔바</span></div>
       <div style="margin:4px 0 2px"><span class="tag ${p.unit === '별과 우주' ? 'a' : 'b'}">${esc(p.unit)}</span>
         ${p.kind === 'custom' ? '<span class="tag" style="background:#f3e8ff;color:#7b2cbf">직접 작성</span>' : ''}</div>

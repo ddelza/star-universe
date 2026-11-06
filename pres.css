@@ -56,9 +56,19 @@ select.sel { width: 100%; padding: 11px; border: 1.5px solid var(--border); bord
 .rubric { width: 100%; border-collapse: collapse; font-size: 0.8rem; line-height: 1.6; }
 .rubric th, .rubric td { border: 1px solid #e1e6f2; padding: 8px 9px; text-align: left; vertical-align: top; }
 .rubric th { background: #f2f4fa; font-size: 0.76rem; }
-.rubric td:first-child { width: 32%; background: #fafbfe; }
+.rubric td:first-child { width: 27%; background: #fafbfe; }
 .pt { display: inline-block; font-size: 0.68rem; background: var(--accent); color: #fff; border-radius: 6px; padding: 0 6px; margin-top: 2px; }
 
 /* 같은 반 친구가 이미 고른 주제 표시 */
 .topic-card.taken { background: #fffaf2; box-shadow: 0 0 0 2px #ffc078, 0 1px 3px rgba(0,0,0,0.06); }
 .taken-ribbon { display: inline-block; background: #ff922b; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 2px 9px; border-radius: 999px; }
+
+.rubric .sc { text-align: center; font-weight: 800; color: var(--accent); }
+.rubric .wh, .wh { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
+.step-card { border-left: 4px solid var(--accent); }
+.pt-tag { display: inline-block; font-size: 0.7rem; background: var(--accent); color: #fff; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
+.checklist2 { font-size: 0.82rem; line-height: 1.8; background: #f6f8fc; border: 1px solid #e1e6f2; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+.checklist2 .ok { color: #2f9e44; font-weight: 700; }
+.checklist2 .no { color: #adb5bd; }
+.rubric.wide td:first-child { width: auto; }
+.rubric td.sc { width: 52px; }

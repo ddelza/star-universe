@@ -55,8 +55,8 @@
   // ---- 상단 메뉴 ----
   window.renderNav = function (active) {
     var s = window.getStudent();
-    var items = [['index.html', '🏠 홈', 'home'], ['pick.html', '📌 주제 고르기', 'pick'], ['my.html', '📝 내 발표', 'my'], ['board.html', '👀 전체 현황', 'board']];
-    if (s && s.isTeacher) items = items.filter(function (i) { return i[2] === 'home' || i[2] === 'board'; });
+    var items = [['index.html', '🏠 홈', 'home'], ['pick.html', '📌 주제', 'pick'], ['my.html', '📝 내 발표', 'my'], ['board.html', '👀 현황', 'board'], ['rubric.html', '📋 평가기준', 'rubric']];
+    if (s && s.isTeacher) items = items.filter(function (i) { return i[2] !== 'pick' && i[2] !== 'my'; });
     var el = document.getElementById('nav');
     if (!el) return;
     el.innerHTML = items.map(function (i) {
