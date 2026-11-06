@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>내 발표 준비</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=8">
+<link rel="stylesheet" href="pres.css?v=9">
 </head>
 <body>
 <div class="wrap">
@@ -15,7 +15,7 @@
 </div>
 <div id="toastBox"></div>
 
-<script src="session.js?v=5"></script>
+<script src="session.js?v=6"></script>
 <script>
 const me = requireLogin();
 if (me && me.isTeacher) { alert('교사 계정은 전체 현황에서 볼 수 있어요.'); location.href = 'board.html'; }
@@ -86,6 +86,7 @@ function renderSaved() {
 }
 
 window.save = async function () {
+  if (!pick) return;
   const o = readForm();
   const err = $('err'); err.classList.remove('show');
   if (o.canva) {
@@ -117,7 +118,7 @@ function render() {
     </div>` : `
     <div class="card" style="border:2px dashed #ffc078;background:#fff9f0">
       <h2>아직 발표 주제를 고르지 않았어요</h2>
-      <p class="hint" style="margin-bottom:10px">주제를 고르면 이 화면 맨 위에 표시돼요. 작성란은 먼저 써 두어도 괜찮아요.</p>
+      <p class="hint" style="margin-bottom:10px">작성란은 아래에서 미리 볼 수 있어요. <b>주제를 고르면 작성할 수 있어요.</b></p>
       <a class="btn small" style="display:inline-block;text-decoration:none" href="pick.html">📌 주제 고르러 가기</a>
     </div>`;
   el.innerHTML = topicCard + `
@@ -170,6 +171,11 @@ function render() {
   FIELDS.forEach(f => { $(f).value = s[f]; $(f).addEventListener('input', refresh); });
   document.querySelectorAll('input[name=ai]').forEach(r => { r.checked = r.value === s.aiUsed; r.addEventListener('change', refresh); });
   renderSaved(); refresh();
+  if (!pick) {
+    document.querySelectorAll('#content textarea, #content input, #saveBtn').forEach(x => { x.disabled = true; });
+    $('saveBtn').textContent = '🔒 주제를 먼저 고르면 작성할 수 있어요';
+    document.querySelectorAll('.step-card').forEach(c => c.classList.add('locked'));
+  }
 }
 
 window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
