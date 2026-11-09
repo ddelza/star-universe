@@ -52,8 +52,55 @@
   };
   window.basePath = async function () { return 'years/' + (await getCfg()).year + '/sciPres'; };
 
+  // ---- 주제 선택 이력(picksLog) · 복원 ----
+  // picksLog/{학번}/{ts} 는 append-only. 선택 취소 시엔 {cancel:true} 기록을 추가로 남김.
+  window.PICK_FIELDS = ['kind', 'no', 'unit', 'kw', 'topic'];
+  window.logPick = async function (base, id, rec) {
+    try { await window.dbPut(base + '/picksLog/' + id + '/' + rec.ts, rec); } catch (e) {}
+  };
+  window.logPickCancel = function (base, id, by) {
+    var ts = Date.now();
+    return window.logPick(base, id, { cancel: true, by: by || 'student', ts: ts });
+  };
+  // picksLog(학생 1명분 객체)와 scripts 레코드(pickSnap)로 가장 최근 선택을 추정. 마지막 기록이 취소면 null.
+  window.pickCandidate = function (log, sc) {
+    var best = null;
+    Object.keys(log || {}).forEach(function (k) {
+      var e = log[k]; if (!e) return;
+      var ts = Number(e.ts || k) || 0;
+      if (!best || ts >= best.ts) best = { ts: ts, e: e, src: 'log' };
+    });
+    if (sc && sc.pickSnap && sc.pickSnap.topic) {
+      var st = Number(sc.updatedAt) || 0;
+      if (!best || st > best.ts) best = { ts: st, e: sc.pickSnap, src: 'snap' };
+    }
+    if (!best || best.e.cancel || !best.e.topic) return null;
+    var c = { src: best.src, ts: best.ts };
+    window.PICK_FIELDS.forEach(function (f) { c[f] = best.e[f] == null ? null : best.e[f]; });
+    return c;
+  };
+  // 후보로 picks 레코드를 다시 만들어 저장(+이력 추가). s: {id,grade,ban,num,name}
+  window.restorePick = async function (base, s, cand) {
+    var rec = { id: s.id, grade: s.grade, ban: s.ban, num: s.num, name: s.name, ts: Date.now(), restored: true };
+    window.PICK_FIELDS.forEach(function (f) { rec[f] = cand[f] == null ? null : cand[f]; });
+    await window.dbPut(base + '/picks/' + s.id, rec);
+    await window.logPick(base, s.id, rec);
+    return rec;
+  };
+  // 학생 화면용 복원 안내 카드
+  window.restoreCardHtml = function (c, btnOnclick) {
+    return '<div class="card topic-card" style="padding:16px;border:2px dashed #ffc078;background:#fff9f0">' +
+      '<b style="font-size:.9rem">선택 기록이 없어요. 아래 주제가 맞나요?</b>' +
+      '<div class="tc-top" style="margin-top:8px"><span class="tag ' + (c.unit === '별과 우주' ? 'a' : 'b') + '">' + window.esc(c.unit) + '</span>' +
+      (c.kind === 'custom' ? '<span class="tag" style="background:#f3e8ff;color:#7b2cbf">직접 작성</span>' : '') + '</div>' +
+      '<div class="chips">' + String(c.kw || '').split(',').filter(function (k) { return k.trim(); }).map(function (k) { return '<span class="chip">' + window.esc(k.trim()) + '</span>'; }).join('') + '</div>' +
+      '<div class="tc-topic">' + window.esc(c.topic) + '</div>' +
+      '<button class="btn small" id="restoreBtn" style="margin-top:10px;width:100%" onclick="' + btnOnclick + '">이 주제로 복원</button>' +
+      '<div class="small-note">다른 주제였다면 복원하지 말고 새로 골라 주세요.</div></div>';
+  };
+
   // ---- 페이지 이동 링크에 빌드 번호를 붙여 오래된 캐시 페이지가 뜨지 않게 함 ----
-  var BUILD = '11';
+  var BUILD = '12';
   window.bustLinks = function () {
     document.querySelectorAll('a[href]').forEach(function (a) {
       var h = a.getAttribute('href');

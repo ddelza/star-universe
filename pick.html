@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>발표 주제 고르기</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=9">
+<link rel="stylesheet" href="pres.css?v=10">
 </head>
 <body>
 <div class="wrap">
@@ -50,13 +50,13 @@
 <div id="toastBox"></div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=7"></script>
+<script src="session.js?v=8"></script>
 <script>
 const me = requireLogin();
 if (me && me.isTeacher) { alert('교사 계정은 주제를 선택하지 않아요. 전체 현황으로 이동합니다.'); location.href = 'board.html'; }
 
 const FILTERS = [['all', '전체'], ['별과 우주', '별과 우주'], ['과학기술과 인류문명', '과학기술과 인류문명'], ['custom', '✏️ 직접 작성']];
-let filter = 'all', query = '', picks = {}, base = '';
+let filter = 'all', query = '', picks = {}, base = '', cand = null;
 
 function toast(msg) {
   const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
@@ -82,6 +82,7 @@ window.setFilter = function (f) { filter = f; renderTabs(); if (f !== 'custom') 
 
 function renderMine() {
   const p = picks[me.id], box = document.getElementById('mine');
+  if (!p && cand) { box.innerHTML = restoreCardHtml(cand, 'doRestore()'); return; }
   if (!p) { box.innerHTML = '<div class="card" style="padding:14px 16px"><b style="font-size:.9rem">아직 주제를 고르지 않았어요.</b></div>'; return; }
   const dups = Object.values(picks).filter(o => o && o.id !== me.id && sameClass(o) && p.no && o.no === p.no);
   box.innerHTML = `<div class="card topic-card mine" style="padding:16px">
@@ -129,7 +130,8 @@ async function savePick(p) {
   const rec = Object.assign({ id: me.id, grade: me.grade, ban: me.ban, num: me.num, name: me.name, ts: Date.now() }, p);
   try {
     await dbPut(base + '/picks/' + me.id, rec);
-    picks[me.id] = rec;
+    picks[me.id] = rec; cand = null;
+    await logPick(base, me.id, rec);
     await loadPicks().catch(() => {});
     renderMine(); renderList();
     toast('✅ 주제가 등록됐어요!');
@@ -140,8 +142,18 @@ async function savePick(p) {
 
 window.cancelPick = async function () {
   if (!confirm('주제 선택을 취소할까요? (써 둔 대본은 남아요)')) return;
-  try { await dbDel(base + '/picks/' + me.id); delete picks[me.id]; renderMine(); renderList(); toast('선택을 취소했어요.'); }
+  try { await dbDel(base + '/picks/' + me.id); delete picks[me.id]; cand = null; await logPickCancel(base, me.id, 'student'); renderMine(); renderList(); toast('선택을 취소했어요.'); }
   catch (e) { alert(e.message); }
+};
+
+window.doRestore = async function () {
+  if (!cand) return;
+  const btn = document.getElementById('restoreBtn'); if (btn) btn.disabled = true;
+  try {
+    picks[me.id] = await restorePick(base, me, cand); cand = null;
+    await loadPicks().catch(() => {});
+    renderMine(); renderList(); toast('✅ 주제를 복원했어요!');
+  } catch (e) { alert(e.message); if (btn) btn.disabled = false; }
 };
 
 function fillCustom() {
@@ -176,6 +188,12 @@ document.getElementById('q').addEventListener('input', e => { query = e.target.v
   renderNav('pick'); renderTabs();
   try { base = await basePath(); await loadPicks(); } catch (e) {
     document.getElementById('list').innerHTML = '<div class="empty-state">불러오지 못했어요. 새로고침해 주세요.</div>'; return;
+  }
+  if (!picks[me.id]) {
+    try {
+      const [log, sc] = await Promise.all([dbGet(base + '/picksLog/' + me.id), dbGet(base + '/scripts/' + me.id)]);
+      cand = pickCandidate(log, sc);
+    } catch (e) {}
   }
   renderMine(); renderList();
 })();

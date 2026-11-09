@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>교사용 · 페임랩 발표</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=9">
+<link rel="stylesheet" href="pres.css?v=10">
 <style>
 .wrap { max-width: 1100px; }
 .step { display: none; } .step.active { display: block; }
@@ -86,11 +86,11 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
 <div id="toastBox"></div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=7"></script>
+<script src="session.js?v=8"></script>
 <script>
 const PASSWORD = 'byung0703!';
 const MIN_OK = 700, MAX_OK = 1050;
-let roster = [], picks = {}, scripts = {}, grades = {}, base = '', curKey = '', tab = 'overview';
+let roster = [], picks = {}, scripts = {}, grades = {}, plog = {}, base = '', curKey = '', tab = 'overview';
 const $ = id => document.getElementById(id);
 
 function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toastBox').appendChild(el); setTimeout(() => el.remove(), 2200); }
@@ -117,10 +117,36 @@ async function start() {
 }
 async function loadAll() {
   const cfg = await getCfg();
-  const [r, p, sc, g] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/scripts'), dbGet(base + '/grades')]);
+  const [r, p, sc, g, lg] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/scripts'), dbGet(base + '/grades'), dbGet(base + '/picksLog').catch(() => null)]);
   roster = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v));
-  picks = p || {}; scripts = sc || {}; grades = g || {};
+  picks = p || {}; scripts = sc || {}; grades = g || {}; plog = lg || {};
 }
+// picks 가 없는 학생의 추정 주제(picksLog 최신 / scripts.pickSnap)
+function candOf(id) { return picks[id] ? null : pickCandidate(plog[id], scripts[id]); }
+// 주제 칸 표시: 선택됨 / 복원 가능 / 기록 없음(대본만) / 미선택
+function topicCell(s) {
+  const p = picks[s.id];
+  if (p) return '<span class="tag ' + (p.unit === '별과 우주' ? 'a' : 'b') + '">' + (p.unit === '별과 우주' ? '별' : '과기') + '</span> ' + esc(p.topic) + (p.restored ? ' <span class="n-none" style="font-size:.7rem">(복원됨)</span>' : '');
+  const c = candOf(s.id);
+  if (c) return '<span class="gbadge" style="background:#fff4e6;color:#c26a00">주제 기록 없음(복원 가능)</span><br><span style="color:var(--text-muted)">추정: ' + esc(c.topic) + ' <span style="font-size:.7rem">[' + (c.src === 'log' ? '선택 이력' : '대본 저장 시점') + ']</span></span> <button class="mini" onclick="restoreFor(\'' + s.id + '\')">복원</button>';
+  if (scripts[s.id]) return '<span class="gbadge" style="background:#fdecea;color:var(--danger)">주제 기록 없음 · 대본만 있음</span>';
+  return '<span class="n-none">미선택</span>';
+}
+window.restoreFor = async function (id) {
+  const s = roster.find(x => x.id === id), c = candOf(id);
+  if (!s || !c) return;
+  if (!confirm(`${s.name} 학생의 주제를 아래 내용으로 복원할까요?\n\n「${c.topic}」\n[${c.unit}${c.kind === 'custom' ? ' · 직접 작성' : ''} · ${c.kw}]`)) return;
+  try {
+    const rec = await restorePick(base, s, c);
+    picks[id] = rec;
+    (plog[id] = plog[id] || {})[rec.ts] = rec;
+    renderOverview(); renderOverlap();
+    const tp = $('tp-' + id); if (tp) tp.innerHTML = reviewTopic(rec);
+    document.querySelectorAll('details[data-id="' + id + '"] .kwtag').forEach(x => { x.textContent = rec.kw; x.style.display = ''; });
+    toast('✅ 주제를 복원했어요');
+  } catch (e) { alert(e.message); }
+};
+function reviewTopic(p) { return esc(p.topic) + '\n<span style="color:var(--text-muted)">[' + esc(p.unit) + (p.kind === 'custom' ? ' · 직접 작성' : '') + ' · ' + esc(p.kw) + ']</span>'; }
 window.reload = async function () { await loadAll(); renderAll(); toast('새로 불러왔어요'); };
 window.onBan = function () { curKey = $('banSel').value; renderAll(); };
 window.setTab = function (t) {
@@ -148,7 +174,7 @@ function renderOverview() {
     const barW = Math.min(ns / 1300, 1) * 100;
     return { s, p, sc, gr, nr, ns, no, html: `<tr>
       <td>${s.num}</td><td class="l"><b>${esc(s.name)}</b></td>
-      <td class="topic">${p ? '<span class="tag ' + (p.unit === '별과 우주' ? 'a' : 'b') + '">' + (p.unit === '별과 우주' ? '별' : '과기') + '</span> ' + esc(p.topic) : '<span class="n-none">미선택</span>'}</td>
+      <td class="topic">${topicCell(s)}</td>
       <td class="${nCls(nr)}">${nr || '—'}</td>
       <td class="l"><span class="bar"><i style="width:${barW}%;background:${barColor(ns)}"></i><b style="left:${700 / 1300 * 100}%"></b><b style="left:${1050 / 1300 * 100}%"></b></span><span class="${nCls(ns)}">${ns || '—'}</span></td>
       <td class="${no ? 'n-ok' : 'n-none'}">${no || '—'}</td>
@@ -161,7 +187,7 @@ function renderOverview() {
   const avg = scr.length ? Math.round(scr.reduce((a, r) => a + r.ns, 0) / scr.length) : 0;
   $('v-overview').innerHTML = `
     <div class="summary">
-      <div><b>${list.length}</b>학생</div><div><b>${cnt(r => r.p)}</b>주제 선택</div>
+      <div><b>${list.length}</b>학생</div><div><b>${cnt(r => r.p)}</b>주제 선택${cnt(r => !r.p && candOf(r.s.id)) ? '<br><span style="color:#c26a00">복원 가능 ' + cnt(r => !r.p && candOf(r.s.id)) + '</span>' : ''}</div>
       <div><b>${cnt(r => r.nr)}</b>선정 이유</div><div><b>${cnt(r => r.ns)}</b>대본</div>
       <div><b>${cnt(r => r.no)}</b>자료 출처</div><div><b>${cnt(r => r.sc.canva)}</b>캔바</div>
     </div>
@@ -190,9 +216,9 @@ function renderReview() {
   $('v-review').innerHTML = `<div class="stu">` + list.map(s => {
     const p = picks[s.id], sc = scripts[s.id] || {}, g = grades[s.id] || {};
     const ns = len(sc.script);
-    const body = !p && !scripts[s.id] ? '<div class="empty-state" style="padding:14px">아직 작성한 내용이 없어요.</div>' : `
+    const body = !p && !scripts[s.id] && !candOf(s.id) ?'<div class="empty-state" style="padding:14px">아직 작성한 내용이 없어요.</div>' : `
       <div class="kv">
-        <b>주제</b><div>${p ? esc(p.topic) + '\n<span style="color:var(--text-muted)">[' + esc(p.unit) + (p.kind === 'custom' ? ' · 직접 작성' : '') + ' · ' + esc(p.kw) + ']</span>' : '미선택'}</div>
+        <b>주제</b><div id="tp-${s.id}">${p ? reviewTopic(p) : topicCell(s)}</div>
         <b>선정 이유 (${len(sc.reason)}자)</b><div>${esc(sc.reason) || '—'}</div>
         <b>대본 (${ns.toLocaleString()}자)</b><div>${esc(sc.script) || '—'}</div>
         <b>자료 출처 (${len(sc.sources)}자)</b><div>${esc(sc.sources) || '—'}</div>
@@ -201,7 +227,7 @@ function renderReview() {
       </div>`;
     const pr = g.prep || {};
     return `<details data-id="${s.id}"><summary><b>${s.num}번 ${esc(s.name)}</b>
-        <span class="n-ok" style="font-size:.76rem;${p ? '' : 'display:none'}">${p ? esc(p.kw) : ''}</span>
+        <span class="n-ok kwtag" style="font-size:.76rem;${p ? '' : 'display:none'}">${p ? esc(p.kw) : ''}</span>
         <span class="gbadge ${g.total != null ? 'y' : 'n'}" id="gb-${s.id}">${g.total != null ? '채점 ' + g.total + '/20' : '미채점'}</span></summary>
       <div class="body">${body}
         <div class="gform">
@@ -273,7 +299,7 @@ window.saveGrade = async function (id) {
 window.clearPick = async function (id) {
   const p = picks[id]; if (!p) return;
   if (!confirm(`${p.name} 학생의 주제 선택을 해제할까요?\n(학생이 다시 고를 수 있고, 써 둔 대본은 남아요)`)) return;
-  try { await dbDel(base + '/picks/' + id); delete picks[id]; renderOverview(); renderOverlap(); document.querySelectorAll('details[data-id="' + id + '"] .mini.danger').forEach(b => b.remove()); toast('선택을 해제했어요 (열람 카드는 새로고침하면 갱신돼요)'); } catch (e) { alert(e.message); }
+  try { await dbDel(base + '/picks/' + id); delete picks[id]; await logPickCancel(base, id, 'teacher'); (plog[id] = plog[id] || {})[Date.now()] = { cancel: true, by: 'teacher', ts: Date.now() }; renderOverview(); const tp = $('tp-' + id); if (tp) tp.innerHTML = topicCell({ id }); renderOverlap(); document.querySelectorAll('details[data-id="' + id + '"] .mini.danger').forEach(b => b.remove()); toast('선택을 해제했어요 (열람 카드는 새로고침하면 갱신돼요)'); } catch (e) { alert(e.message); }
 };
 
 /* ---------- 겹치는 주제 ---------- */
