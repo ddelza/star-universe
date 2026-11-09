@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>내 발표 준비</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=10">
+<link rel="stylesheet" href="pres.css?v=11">
 </head>
 <body>
 <div class="wrap">
@@ -15,7 +15,7 @@
 </div>
 <div id="toastBox"></div>
 
-<script src="session.js?v=8"></script>
+<script src="session.js?v=10"></script>
 <script>
 const me = requireLogin();
 if (me && me.isTeacher) { alert('교사 계정은 전체 현황에서 볼 수 있어요.'); location.href = 'board.html'; }
@@ -68,8 +68,44 @@ function refresh() {
     item(sourcesDone(o), '자료 출처 <span class="wh">(2점)</span>') +
     item(o.canva, '캔바 링크 <span class="wh">(발표 자료)</span>');
   dirty = JSON.stringify(o) !== JSON.stringify(normSaved());
-  $('dirtyNote').textContent = dirty ? '✏️ 저장하지 않은 내용이 있어요' : '';
+  if (pick) {
+    try { if (dirty) localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.assign({}, o, { ts: Date.now() }))); else localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    if (dirty) { setNote('✏️ 입력 중… 잠시 후 자동 저장돼요', '#e8590c'); scheduleAuto(); }
+    else if (!saving) setNote(lastSavedNote(), '#2f9e44');
+  } else setNote('', '');
 }
+
+/* ---------- 자동 저장 ---------- */
+const AUTO_MS = 3000;
+let autoTimer = null, saving = false, again = false;
+const DRAFT_KEY = 'sciPresDraft_' + (me ? me.id : '');
+function setNote(t, color) { const el = $('dirtyNote'); if (el) { el.textContent = t; el.style.color = color || ''; } }
+function lastSavedNote() {
+  if (!saved || !saved.updatedAt) return '';
+  const d = new Date(saved.updatedAt);
+  return `☁️ 자동 저장됨 · ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+}
+function scheduleAuto() { clearTimeout(autoTimer); autoTimer = setTimeout(() => save({ auto: true }), AUTO_MS); }
+function buildRec(o) {
+  if (o.canva && !/^https?:\/\//i.test(o.canva)) o.canva = 'https://' + o.canva;
+  const rec = Object.assign({}, o, { updatedAt: Date.now() });
+  const snap = {}; PICK_FIELDS.forEach(f => { snap[f] = pick[f] == null ? null : pick[f]; });
+  rec.pickSnap = snap;
+  return rec;
+}
+function statusOf(o, t) { return { s: o.script.length, c: !!o.canva, r: !!o.reason.trim(), o: !!sourcesDone(o), t }; }
+// 탭을 닫거나 다른 앱으로 넘어갈 때: 저장 안 된 내용이 있으면 keepalive 로 바로 보냄
+function flushNow() {
+  if (!pick || !dirty) return;
+  const o = readForm(), rec = buildRec(o);
+  const opt = b => ({ method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify(b) });
+  try {
+    fetch(DB_URL + '/' + base + '/scripts/' + me.id + '.json', opt(rec));
+    fetch(DB_URL + '/' + base + '/status/' + me.id + '.json', opt(statusOf(o, rec.updatedAt)));
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNow(); });
+window.addEventListener('pagehide', flushNow);
 
 function renderSaved() {
   const el = $('savedBox');
@@ -85,26 +121,37 @@ function renderSaved() {
     · 캔바 ${s.canva ? '✔ <a href="' + esc(s.canva) + '" target="_blank" rel="noopener">' + esc(s.canva) + '</a>' : '— 아직 없음'}`;
 }
 
-window.save = async function () {
+window.save = async function (opts) {
+  const auto = !!(opts && opts.auto);
   if (!pick) return;
+  clearTimeout(autoTimer);
+  if (saving) { again = true; return; }          // 저장 중이면 끝난 뒤 한 번 더
   const o = readForm();
   const err = $('err'); err.classList.remove('show');
-  if (o.canva) {
-    if (!/^https?:\/\//i.test(o.canva)) o.canva = 'https://' + o.canva;
-    if (!/canva\.com|canva\.link/i.test(o.canva) && !confirm('캔바 링크가 아닌 것 같아요. 그래도 저장할까요?')) return;
+  if (!auto && o.canva) {
+    const c = /^https?:\/\//i.test(o.canva) ? o.canva : 'https://' + o.canva;
+    if (!/canva\.com|canva\.link/i.test(c) && !confirm('캔바 링크가 아닌 것 같아요. 그래도 저장할까요?')) return;
   }
-  const btn = $('saveBtn'); btn.disabled = true; btn.textContent = '저장 중...';
-  const rec = Object.assign({}, o, { updatedAt: Date.now() });
-  const snap = {}; PICK_FIELDS.forEach(f => { snap[f] = pick[f] == null ? null : pick[f]; });
-  rec.pickSnap = snap;
+  const rec = buildRec(o);
+  saving = true;
+  const btn = $('saveBtn');
+  if (!auto) { btn.disabled = true; btn.textContent = '저장 중...'; } else setNote('☁️ 자동 저장 중…', '#868e96');
   try {
     await dbPut(base + '/scripts/' + me.id, rec);
-    await dbPut(base + '/status/' + me.id, { s: o.script.length, c: !!o.canva, r: !!o.reason.trim(), o: !!sourcesDone(o), t: rec.updatedAt });
-    saved = rec; $('canva').value = o.canva;
+    await dbPut(base + '/status/' + me.id, statusOf(o, rec.updatedAt));
+    saved = rec;
+    const cv = $('canva'); if (document.activeElement !== cv) cv.value = o.canva;  // 입력 중인 칸은 건드리지 않음
+    saving = false;
     renderSaved(); refresh();
-    toast('✅ 저장했어요!');
-  } catch (e) { err.textContent = e.message; err.classList.add('show'); }
-  finally { btn.disabled = false; btn.textContent = '💾 저장하기'; }
+    if (!auto) toast('✅ 저장했어요!');
+  } catch (e) {
+    saving = false;
+    if (auto) { setNote('⚠️ 자동 저장 실패 — 인터넷 연결을 확인해 주세요 (입력 내용은 이 기기에 임시 보관돼요)', '#c92a2a'); scheduleAuto(); }
+    else { err.textContent = e.message; err.classList.add('show'); }
+  } finally {
+    if (!auto) { btn.disabled = false; btn.textContent = '💾 저장하기'; }
+    if (again) { again = false; save({ auto: true }); }
+  }
 };
 
 function render() {
@@ -135,7 +182,7 @@ function render() {
 
     <div class="card step-card">
       <h2>② 발표 대본 <span class="pt-tag">2점</span></h2>
-      <p class="hint">내 주제에 대해 발표할 내용을 써 보세요. 쓰는 중에는 자동 저장되지 않으니 꼭 <b>저장하기</b>를 눌러 주세요.</p>
+      <p class="hint">내 주제에 대해 발표할 내용을 써 보세요. 입력을 멈추면 3초 뒤 <b>자동 저장</b>돼요. (저장하기 버튼으로 바로 저장해도 돼요)</p>
       <textarea id="script" style="min-height:260px;line-height:1.7" placeholder="안녕하세요, 저는 ○○○입니다. 오늘 제가 소개할 주제는..."></textarea>
       <div class="counter" id="counter"></div>
       <div class="small-note">💡 3분 발표는 공백 포함 약 700~1,000자 정도가 적당해요. (1분에 300자 안팎으로 말하는 속도 기준이며, 슬라이드를 보며 설명하는 시간을 생각하면 조금 짧아도 괜찮아요. 발표 시간은 2분 30초~4분 사이가 되도록 해요.)</div>
@@ -172,7 +219,20 @@ function render() {
   const s = normSaved();
   FIELDS.forEach(f => { $(f).value = s[f]; $(f).addEventListener('input', refresh); });
   document.querySelectorAll('input[name=ai]').forEach(r => { r.checked = r.value === s.aiUsed; r.addEventListener('change', refresh); });
+  // 이 기기에 남은 '서버보다 최신' 임시 보관본이 있으면 불러옴 (인터넷이 끊겼다가 닫힌 경우 등)
+  let restoredDraft = false;
+  if (pick) {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      if (d && d.ts > ((saved && saved.updatedAt) || 0)) {
+        FIELDS.forEach(f => { if (typeof d[f] === 'string') $(f).value = d[f]; });
+        document.querySelectorAll('input[name=ai]').forEach(r => { r.checked = r.value === d.aiUsed; });
+        restoredDraft = true;
+      }
+    } catch (e) {}
+  }
   renderSaved(); refresh();
+  if (restoredDraft && dirty) toast('💾 저장되지 않았던 내용을 불러왔어요. 곧 자동 저장돼요.');
   if (!pick) {
     document.querySelectorAll('#content textarea, #content input, #saveBtn').forEach(x => { x.disabled = true; });
     $('saveBtn').textContent = '🔒 주제를 먼저 고르면 작성할 수 있어요';

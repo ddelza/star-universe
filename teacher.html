@@ -3,98 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>교사용 · 페임랩 발표</title>
+<title>교사용 채점 — 우주와 문명 페임랩 발표</title>
 <link rel="stylesheet" href="common.css">
-<link rel="stylesheet" href="pres.css?v=10">
+<link rel="stylesheet" href="pres.css?v=11">
 <style>
-.wrap { max-width: 1100px; }
+.wrap { max-width: 1400px; }
 .step { display: none; } .step.active { display: block; }
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
 .toolbar select { padding: 9px; border-radius: 10px; border: 1.5px solid var(--accent); font-family: inherit; font-size: 0.9rem; }
+.toolbar .btn { width: auto; margin: 0; }
 .grid-wrap { overflow-x: auto; background: var(--surface); border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-table.grid { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
-.grid th, .grid td { border-bottom: 1px solid #eef1f7; padding: 8px 9px; text-align: center; white-space: nowrap; }
-.grid th { background: #f2f4fa; font-size: 0.74rem; position: sticky; top: 0; }
-.grid td.l { text-align: left; }
-.grid td.topic { text-align: left; white-space: normal; min-width: 200px; max-width: 320px; font-size: .78rem; line-height: 1.45; }
+table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+.grid th, .grid td { border-bottom: 1px solid #eef1f7; padding: 7px 8px; text-align: center; white-space: nowrap; }
+.grid th { background: #f2f4fa; position: sticky; top: 0; font-size: 0.74rem; }
+.grid th small { display: block; font-weight: 400; color: var(--text-muted); }
+.grid th.grp { background: #e7ecff; color: var(--accent); }
+.grid td.name { text-align: left; font-weight: 600; }
+.grid td.topic { text-align: left; white-space: normal; min-width: 180px; max-width: 280px; font-size: .76rem; line-height: 1.45; }
+.grid tr.stu { cursor: pointer; }
+.grid tr.stu:hover td { background: #f6f8ff; }
+.grid td.sc { font-weight: 700; }
+.grid td.sc.empty { color: #ccc; font-weight: 400; }
+.grid td.total { font-weight: 800; color: var(--accent); }
+.grid td.total.part { color: #adb5bd; font-weight: 600; }
+.grid td.memo { text-align: left; max-width: 160px; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted); }
 .grid tr.sum td { background: #f8f9fc; font-weight: 700; }
-.grid tr:hover td { background: #fafbff; }
-.n-none { color: #ccc; }
-.n-short { color: #e8590c; font-weight: 700; }
-.n-ok { color: #2f9e44; font-weight: 700; }
-.n-long { color: #c92a2a; font-weight: 700; }
-.bar { display: inline-block; vertical-align: middle; width: 90px; height: 10px; background: #eef1f7; border-radius: 6px; margin-right: 6px; position: relative; overflow: hidden; }
+.grid td.sep, .grid th.sep { border-left: 2px solid #dfe5f5; }
+.n-none { color: #ccc; } .n-short { color: #e8590c; font-weight: 700; } .n-ok { color: #2f9e44; font-weight: 700; } .n-long { color: #c92a2a; font-weight: 700; }
+.bar { display: inline-block; vertical-align: middle; width: 80px; height: 9px; background: #eef1f7; border-radius: 6px; margin-right: 6px; position: relative; overflow: hidden; }
 .bar i { display: block; height: 100%; border-radius: 6px; }
 .bar b { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,.25); }
-.ok-dot { color: #2f9e44; font-weight: 800; } .no-dot { color: #ddd; }
+.ok-dot { color: #2f9e44; font-weight: 800; text-decoration: none; } .no-dot { color: #ddd; }
 .legend { font-size: .74rem; color: var(--text-muted); margin: 8px 2px 14px; line-height: 1.7; }
-.legend span { font-weight: 700; }
-.stu details { background: var(--surface); border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.stu summary { padding: 11px 14px; cursor: pointer; font-size: .86rem; list-style: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.stu summary::-webkit-details-marker { display: none; }
-.stu .body { padding: 4px 14px 14px; font-size: .84rem; }
-.kv { display: grid; grid-template-columns: 110px 1fr; gap: 6px 10px; line-height: 1.6; margin-bottom: 12px; }
-.kv b { color: var(--accent); font-size: .76rem; }
-.kv div { white-space: pre-wrap; word-break: break-word; }
-.gform { border-top: 1px dashed var(--border); padding-top: 12px; }
-.grow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 7px 0; }
-.grow > label { width: 150px; font-weight: 700; font-size: .8rem; }
-.grow select, .grow input[type=number], .grow input[type=text] { padding: 7px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: .85rem; }
-.grow input[type=number] { width: 70px; }
-.sub { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: .78rem; color: var(--text-muted); }
-.tot { font-size: 1rem; font-weight: 800; color: var(--accent); }
-.gbadge { font-size: .68rem; padding: 1px 8px; border-radius: 6px; font-weight: 700; }
-.gbadge.y { background: #e6f7ec; color: #2f9e44; } .gbadge.n { background: #f1f3f5; color: #adb5bd; }
-.tabs2 { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-.mini { padding: 7px 12px; border-radius: 8px; border: none; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: .8rem; cursor: pointer; }
+.mini { padding: 5px 10px; border-radius: 8px; border: none; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: .76rem; cursor: pointer; font-family: inherit; }
 .mini.danger { background: #fdecea; color: var(--danger); }
+.gbadge { font-size: .68rem; padding: 1px 8px; border-radius: 6px; font-weight: 700; }
+/* 채점 모달 (cell-genetics 채점 페이지와 같은 구성) */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: flex-start; justify-content: center; padding: 20px 10px; overflow-y: auto; z-index: 50; }
+.modal-bg.show { display: flex; }
+.modal { background: var(--bg); border-radius: 14px; padding: 14px; max-width: 1050px; width: 100%; }
+.mhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; position: sticky; top: -20px; background: var(--bg); padding: 6px 0; z-index: 2; }
+.mhead h3 { margin: 0; flex: 1; font-size: 1rem; }
+.mhead .btn { width: auto; margin: 0; padding: 8px 12px; }
+.sec { background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.sec h4 { margin: 0 0 8px; font-size: 0.92rem; color: var(--accent); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.crit { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; border-top: 1px dashed #dde3ea; padding-top: 10px; margin-top: 10px; }
+.crit:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+@media (max-width: 760px) { .crit { grid-template-columns: 1fr; } }
+.ans b { display: block; font-size: 0.74rem; color: var(--accent); margin-top: 6px; }
+.ans b:first-child { margin-top: 0; }
+.ans div { white-space: pre-wrap; word-break: break-word; font-size: 0.86rem; line-height: 1.6; }
+.ans .none { color: #bbb; }
+.ans .scroll { max-height: 320px; overflow-y: auto; background: #fafbfe; border-radius: 8px; padding: 6px 8px; }
+.ans .dayonly { color: var(--text-muted); font-size: .8rem; background: #f8f9fc; border-radius: 8px; padding: 8px 10px; }
+.scorebox .ttl { font-weight: 700; font-size: 0.84rem; margin-bottom: 6px; }
+.pts { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px; }
+.pts button { min-width: 36px; padding: 7px 8px; border: 1.5px solid var(--border); background: var(--surface); border-radius: 8px; font-size: 0.86rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+.pts button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pts button.clear { min-width: 0; color: var(--text-muted); font-weight: 400; font-size: 0.74rem; }
+.rub { font-size: 0.74rem; line-height: 1.5; color: #555; }
+.rub div { margin: 2px 0; }
+.rub i { font-style: normal; font-weight: 700; color: var(--accent); }
+.sugg { font-size: .74rem; background: #fff9db; color: #6b5800; border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; display: inline-block; }
+.subtot { font-size: .82rem; font-weight: 800; color: #fff; background: var(--accent); border-radius: 8px; padding: 2px 10px; }
+.savestate { font-size: 0.74rem; color: var(--text-muted); }
+.memo-in { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.85rem; }
+.peer-in { width: 70px; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="header"><h1>👩‍🏫 교사용 · 우주와 문명 페임랩 발표</h1><p id="semLabel"></p></div>
+  <div class="header"><h1>👩‍🏫 우주와 문명 페임랩 발표 · 교사용 채점</h1><p id="semLabel"></p></div>
 
   <div class="step active" id="step-pw">
     <div class="card" style="max-width:420px;margin:0 auto">
       <h2>비밀번호</h2>
-      <input type="password" id="pwInput" placeholder="비밀번호">
+      <input type="password" id="pwInput">
       <div class="error-msg" id="pwError">비밀번호가 틀렸어요.</div>
       <button class="btn" onclick="checkPw()">입장</button>
     </div>
   </div>
 
   <div class="step" id="step-main">
-    <div class="who-banner"><span>교사용 현황 · 열람 · 채점</span><div class="links"><a href="index.html">학생 홈</a><a href="board.html">학생용 현황</a></div></div>
-
     <div class="toolbar">
       <select id="banSel" onchange="onBan()"></select>
-      <button class="mini" onclick="reload()">🔄 새로고침</button>
-      <button class="mini" onclick="exportCsv()">⬇️ CSV 내보내기</button>
+      <button class="btn small secondary" onclick="reload()">🔄 새로고침</button>
+      <button class="btn small secondary" onclick="exportCsv()">⬇️ CSV 내보내기</button>
+      <button class="btn small secondary" id="dupBtn" onclick="showOverlap()">⚠️ 겹치는 주제</button>
+      <a class="btn small secondary" href="board.html" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">👀 학생용 현황</a>
+      <span class="dc-muted" id="loadInfo"></span>
     </div>
-
-    <div class="tabs2" id="tabs">
-      <button class="tab-btn active" data-t="overview" onclick="setTab('overview')">📊 글자수 현황</button>
-      <button class="tab-btn" data-t="review" onclick="setTab('review')">📝 열람 · 채점</button>
-      <button class="tab-btn" data-t="overlap" onclick="setTab('overlap')">⚠️ 겹치는 주제</button>
-    </div>
-
-    <div id="v-overview"></div>
-    <div id="v-review" style="display:none"></div>
-    <div id="v-overlap" style="display:none"></div>
+    <div class="summary" id="summary"></div>
+    <p class="hint">학생 줄을 누르면 작성 내용을 보며 채점할 수 있어요. 점수 버튼을 누르면 바로 저장돼요. 채점 창에서는 ← → 키로 이전·다음 학생으로 넘어가요.</p>
+    <div class="grid-wrap"><table class="grid" id="grid"></table></div>
+    <div class="legend">대본 막대: <span style="color:#e8590c;font-weight:700">주황 700자 미만</span> · <span style="color:#2f9e44;font-weight:700">초록 700~1,050자(3분 적정)</span> · <span style="color:#c92a2a;font-weight:700">빨강 1,050자 초과</span> · 세로선은 700자·1,050자 기준선. 합계가 회색이면 아직 채점 안 한 항목이 있어요.</div>
   </div>
 </div>
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modalBody"></div></div>
 <div id="toastBox"></div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=8"></script>
+<script src="session.js?v=10"></script>
 <script>
 const PASSWORD = 'byung0703!';
-const MIN_OK = 700, MAX_OK = 1050;
-let roster = [], picks = {}, scripts = {}, grades = {}, plog = {}, base = '', curKey = '', tab = 'overview';
+const MIN_OK = 700, MAX_OK = 1050, CPM = 300;
 const $ = id => document.getElementById(id);
 
-function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toastBox').appendChild(el); setTimeout(() => el.remove(), 2200); }
+// 채점 항목 (평가기준 탭과 같은 내용). pr·ps·po 세 칸의 합이 '발표 준비하기'(최하 1점)
+const CRIT = [
+  { id: 'pr', grp: 'prep', label: '주제 선정 이유', max: 1, min: 0, rubric: [[1, '발표 주제를 정하고 선정한 이유를 간단히 작성함'], [0, '작성하지 않음']] },
+  { id: 'ps', grp: 'prep', label: '발표 대본 준비', max: 2, min: 0, rubric: [[2, '발표할 내용을 대본으로 준비함'], [1, '대본이 일부만 작성됨'], [0, '작성하지 않음']] },
+  { id: 'po', grp: 'prep', label: '자료 출처 작성', max: 2, min: 0, rubric: [[2, '자료 출처를 작성함 (AI 활용 시 물어본 내용 + 발표에 활용한 것까지)'], [1, '출처 또는 AI 기록이 일부 빠짐'], [0, '작성하지 않음']] },
+  { id: 'comm', short: '의사소통', label: '② 과학적 의사소통하기', max: 2, min: 1, rubric: [[2, '핵심 개념을 과학적 오류 없이 정확하게 전달하며, 전문 용어를 맥락에 맞게 적절히 사용함'], [1, '핵심 개념을 대체로 정확하게 설명하나, 일부 용어 선택이나 세부 설명에서 보완이 필요함']] },
+  { id: 'strat', short: '설명전략', label: '③-1 설명 전략', max: 2, min: 0, rubric: [['', '발표 자료의 가독성, 시인성, 사진 및 정보 배치'], ['', '최하점 0점']] },
+  { id: 'concept', short: '개념전달', label: '③-2 과학적 개념 효과적으로 전달하기', max: 2, min: 0, rubric: [[2, '성량·말하기 속도·시선 처리·몸짓 등 비언어적 표현을 능숙하게 활용해 몰입을 이끌고 설득력 있게 전달함'], [1, '차분하고 명확하게 전달하나, 비언어적 표현이 일부 미흡함'], [0, '음성이 작거나 청중과의 상호작용(시선 처리 등)이 전혀 없음']] },
+  { id: 'time', short: '시간관리', label: '③-3 전략적으로 시간 관리하기', max: 2, min: 1, rubric: [[2, '발표 시간 2분 30초 ~ 4분 사이'], [1, '범위를 벗어남 (최하점 1점)']] },
+  { id: 'mem', short: '내재화', label: '④ 지식 내재화하기', max: 2, min: 1, rubric: [[2, '대본을 보지 않고 발표함'], [1, '대본을 보며 발표함']] },
+  { id: 'peer', short: '청취자', label: '⑤ 청취자 평가 제공하기', max: 5, min: 1, rubric: [[5, '동료평가 작성 90% 이상 (학급 인원 수 기준)'], [4, '70% 이상'], [3, '50% 이상'], [2, '30% 이상'], [1, '30% 미만']] },
+];
+const COLS = [{ id: 'prep', short: '준비', max: 5 }, ...CRIT.filter(c => c.grp !== 'prep').map(c => ({ id: c.id, short: c.short, max: c.max }))];
 
+let roster = [], picks = {}, scripts = {}, grades = {}, plog = {}, base = '', curKey = '', list = [], curIdx = -1;
+
+function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toastBox').appendChild(el); setTimeout(() => el.remove(), 2200); }
+const has = v => v !== undefined && v !== null && v !== '';
+const len = v => v ? String(v).length : 0;
+function fmtT(ts) { if (!ts) return ''; const d = new Date(ts); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; }
+function fmtDur(n) { const s = Math.round(n / CPM * 60); return Math.floor(s / 60) + '분 ' + String(s % 60).padStart(2, '0') + '초'; }
+function nCls(n) { return n === 0 ? 'n-none' : n < MIN_OK ? 'n-short' : n <= MAX_OK ? 'n-ok' : 'n-long'; }
+function barColor(n) { return n === 0 ? '#ddd' : n < MIN_OK ? '#ffa94d' : n <= MAX_OK ? '#51cf66' : '#ff6b6b'; }
+
+// 점수 계산
+function prepOf(g) { return g && has(g.pr) && has(g.ps) && has(g.po) ? Math.max(1, +g.pr + +g.ps + +g.po) : null; }
+function colVal(g, id) { return id === 'prep' ? prepOf(g) : g && has(g[id]) ? +g[id] : null; }
+function totalOf(g) {
+  const vals = COLS.map(c => colVal(g, c.id));
+  return { sum: vals.reduce((a, v) => a + (v || 0), 0), done: vals.every(v => v != null), any: vals.some(v => v != null) };
+}
+
+/* ---------- 입장·불러오기 ---------- */
 window.checkPw = function () {
   if ($('pwInput').value !== PASSWORD) { $('pwError').classList.add('show'); return; }
   try { sessionStorage.setItem('sciTeacher', '1'); } catch (e) {}
@@ -112,23 +159,31 @@ async function start() {
       .sort((a, b) => Number(a.split('-')[1]) - Number(b.split('-')[1]));
     $('banSel').innerHTML = keys.map(k => `<option value="${k}">${k.split('-')[0]}학년 ${k.split('-')[1]}반</option>`).join('');
     curKey = keys[0] || ''; $('banSel').value = curKey;
-    renderAll();
-  } catch (e) { $('v-overview').innerHTML = '<div class="empty-state">불러오지 못했어요. 새로고침해 주세요.</div>'; }
+    renderGrid();
+  } catch (e) { $('grid').innerHTML = '<tr><td class="empty-state">불러오지 못했어요. 새로고침해 주세요.</td></tr>'; }
 }
 async function loadAll() {
   const cfg = await getCfg();
   const [r, p, sc, g, lg] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/scripts'), dbGet(base + '/grades'), dbGet(base + '/picksLog').catch(() => null)]);
   roster = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v));
   picks = p || {}; scripts = sc || {}; grades = g || {}; plog = lg || {};
+  $('loadInfo').textContent = '불러옴 ' + new Date().toLocaleTimeString();
 }
-// picks 가 없는 학생의 추정 주제(picksLog 최신 / scripts.pickSnap)
+window.reload = async function () { await loadAll(); renderGrid(); toast('새로 불러왔어요'); };
+window.onBan = function () { curKey = $('banSel').value; renderGrid(); };
+function classList() {
+  const [g, b] = curKey.split('-');
+  return roster.filter(s => String(s.grade) === g && String(s.ban) === b).sort((x, y) => x.num - y.num);
+}
+
+/* ---------- 주제 표시·복원·해제 ---------- */
 function candOf(id) { return picks[id] ? null : pickCandidate(plog[id], scripts[id]); }
-// 주제 칸 표시: 선택됨 / 복원 가능 / 기록 없음(대본만) / 미선택
+function unitTag(u) { return '<span class="tag ' + (u === '별과 우주' ? 'a' : 'b') + '">' + (u === '별과 우주' ? '별' : '과기') + '</span>'; }
 function topicCell(s) {
   const p = picks[s.id];
-  if (p) return '<span class="tag ' + (p.unit === '별과 우주' ? 'a' : 'b') + '">' + (p.unit === '별과 우주' ? '별' : '과기') + '</span> ' + esc(p.topic) + (p.restored ? ' <span class="n-none" style="font-size:.7rem">(복원됨)</span>' : '');
+  if (p) return unitTag(p.unit) + ' ' + esc(p.topic) + (p.restored ? ' <span class="n-none" style="font-size:.7rem">(복원됨)</span>' : '');
   const c = candOf(s.id);
-  if (c) return '<span class="gbadge" style="background:#fff4e6;color:#c26a00">주제 기록 없음(복원 가능)</span><br><span style="color:var(--text-muted)">추정: ' + esc(c.topic) + ' <span style="font-size:.7rem">[' + (c.src === 'log' ? '선택 이력' : '대본 저장 시점') + ']</span></span> <button class="mini" onclick="restoreFor(\'' + s.id + '\')">복원</button>';
+  if (c) return '<span class="gbadge" style="background:#fff4e6;color:#c26a00">기록 없음 · 복원 가능</span> <button class="mini" onclick="event.stopPropagation();restoreFor(\'' + s.id + '\')">복원</button><br><span style="color:var(--text-muted)">추정: ' + esc(c.topic) + '</span>';
   if (scripts[s.id]) return '<span class="gbadge" style="background:#fdecea;color:var(--danger)">주제 기록 없음 · 대본만 있음</span>';
   return '<span class="n-none">미선택</span>';
 }
@@ -138,195 +193,206 @@ window.restoreFor = async function (id) {
   if (!confirm(`${s.name} 학생의 주제를 아래 내용으로 복원할까요?\n\n「${c.topic}」\n[${c.unit}${c.kind === 'custom' ? ' · 직접 작성' : ''} · ${c.kw}]`)) return;
   try {
     const rec = await restorePick(base, s, c);
-    picks[id] = rec;
-    (plog[id] = plog[id] || {})[rec.ts] = rec;
-    renderOverview(); renderOverlap();
-    const tp = $('tp-' + id); if (tp) tp.innerHTML = reviewTopic(rec);
-    document.querySelectorAll('details[data-id="' + id + '"] .kwtag').forEach(x => { x.textContent = rec.kw; x.style.display = ''; });
-    toast('✅ 주제를 복원했어요');
-  } catch (e) { alert(e.message); }
-};
-function reviewTopic(p) { return esc(p.topic) + '\n<span style="color:var(--text-muted)">[' + esc(p.unit) + (p.kind === 'custom' ? ' · 직접 작성' : '') + ' · ' + esc(p.kw) + ']</span>'; }
-window.reload = async function () { await loadAll(); renderAll(); toast('새로 불러왔어요'); };
-window.onBan = function () { curKey = $('banSel').value; renderAll(); };
-window.setTab = function (t) {
-  tab = t;
-  document.querySelectorAll('#tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.t === t));
-  ['overview', 'review', 'overlap'].forEach(x => { $('v-' + x).style.display = x === t ? 'block' : 'none'; });
-};
-
-function classList() {
-  const [g, b] = curKey.split('-');
-  return roster.filter(s => String(s.grade) === g && String(s.ban) === b).sort((x, y) => x.num - y.num);
-}
-function len(v) { return v ? String(v).length : 0; }
-function nCls(n) { return n === 0 ? 'n-none' : n < MIN_OK ? 'n-short' : n <= MAX_OK ? 'n-ok' : 'n-long'; }
-function barColor(n) { return n === 0 ? '#ddd' : n < MIN_OK ? '#ffa94d' : n <= MAX_OK ? '#51cf66' : '#ff6b6b'; }
-function aiLabel(sc) { return !sc || !sc.aiUsed ? '<span class="n-none">—</span>' : sc.aiUsed === 'yes' ? 'AI 사용' : 'AI 안 씀'; }
-function renderAll() { renderOverview(); renderReview(); renderOverlap(); setTab(tab); }
-
-/* ---------- 글자수 현황 ---------- */
-function renderOverview() {
-  const list = classList();
-  const rows = list.map(s => {
-    const p = picks[s.id], sc = scripts[s.id] || {}, gr = grades[s.id];
-    const nr = len(sc.reason), ns = len(sc.script), no = len(sc.sources);
-    const barW = Math.min(ns / 1300, 1) * 100;
-    return { s, p, sc, gr, nr, ns, no, html: `<tr>
-      <td>${s.num}</td><td class="l"><b>${esc(s.name)}</b></td>
-      <td class="topic">${topicCell(s)}</td>
-      <td class="${nCls(nr)}">${nr || '—'}</td>
-      <td class="l"><span class="bar"><i style="width:${barW}%;background:${barColor(ns)}"></i><b style="left:${700 / 1300 * 100}%"></b><b style="left:${1050 / 1300 * 100}%"></b></span><span class="${nCls(ns)}">${ns || '—'}</span></td>
-      <td class="${no ? 'n-ok' : 'n-none'}">${no || '—'}</td>
-      <td>${aiLabel(sc)}</td>
-      <td>${sc.canva ? '<a class="ok-dot" href="' + esc(sc.canva) + '" target="_blank" rel="noopener">✔</a>' : '<span class="no-dot">○</span>'}</td>
-      <td>${gr && gr.total != null ? '<b>' + gr.total + '</b>' : '<span class="n-none">—</span>'}</td></tr>` };
-  });
-  const cnt = f => rows.filter(f).length;
-  const scr = rows.filter(r => r.ns > 0);
-  const avg = scr.length ? Math.round(scr.reduce((a, r) => a + r.ns, 0) / scr.length) : 0;
-  $('v-overview').innerHTML = `
-    <div class="summary">
-      <div><b>${list.length}</b>학생</div><div><b>${cnt(r => r.p)}</b>주제 선택${cnt(r => !r.p && candOf(r.s.id)) ? '<br><span style="color:#c26a00">복원 가능 ' + cnt(r => !r.p && candOf(r.s.id)) + '</span>' : ''}</div>
-      <div><b>${cnt(r => r.nr)}</b>선정 이유</div><div><b>${cnt(r => r.ns)}</b>대본</div>
-      <div><b>${cnt(r => r.no)}</b>자료 출처</div><div><b>${cnt(r => r.sc.canva)}</b>캔바</div>
-    </div>
-    <div class="grid-wrap"><table class="grid">
-      <tr><th>번호</th><th>이름</th><th>주제</th><th>선정 이유<br>(자)</th><th style="min-width:190px">대본 (자, 공백 포함)</th><th>자료 출처<br>(자)</th><th>AI</th><th>캔바</th><th>채점<br>(/20)</th></tr>
-      ${rows.map(r => r.html).join('')}
-      <tr class="sum"><td colspan="3" style="text-align:right">대본 작성자 평균</td><td></td><td class="l">${avg ? avg + '자' : '—'}</td><td></td><td></td><td></td><td></td></tr>
-    </table></div>
-    <div class="legend">대본 막대: <span style="color:#e8590c">주황 700자 미만</span> · <span style="color:#2f9e44">초록 700~1,050자(3분 적정)</span> · <span style="color:#c92a2a">빨강 1,050자 초과</span> · 막대의 세로선은 700자·1,050자 기준선이에요.</div>`;
-}
-
-/* ---------- 열람·채점 ---------- */
-const OPT = {
-  comm: [[2, '2 · 정확·적절'], [1, '1 · 일부 보완']],
-  strat: [[2, '2'], [1, '1'], [0, '0']],
-  concept: [[2, '2 · 몰입·설득'], [1, '1 · 일부 미흡'], [0, '0 · 전달 어려움']],
-  time: [[2, '2 · 2분30초~4분'], [1, '1 · 범위 밖']],
-  mem: [[2, '2 · 대본 안 봄'], [1, '1 · 대본 봄']],
-  peer: [[5, '5 (90%↑)'], [4, '4 (70%↑)'], [3, '3 (50%↑)'], [2, '2 (30%↑)'], [1, '1 (30%↓)']],
-};
-function sel(id, f, opts, val, extra) {
-  return `<select id="g-${id}-${f}" onchange="calc('${id}')" ${extra || ''}><option value="">—</option>${opts.map(o => `<option value="${o[0]}" ${String(val) === String(o[0]) ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>`;
-}
-function renderReview() {
-  const list = classList(), size = list.length;
-  $('v-review').innerHTML = `<div class="stu">` + list.map(s => {
-    const p = picks[s.id], sc = scripts[s.id] || {}, g = grades[s.id] || {};
-    const ns = len(sc.script);
-    const body = !p && !scripts[s.id] && !candOf(s.id) ?'<div class="empty-state" style="padding:14px">아직 작성한 내용이 없어요.</div>' : `
-      <div class="kv">
-        <b>주제</b><div id="tp-${s.id}">${p ? reviewTopic(p) : topicCell(s)}</div>
-        <b>선정 이유 (${len(sc.reason)}자)</b><div>${esc(sc.reason) || '—'}</div>
-        <b>대본 (${ns.toLocaleString()}자)</b><div>${esc(sc.script) || '—'}</div>
-        <b>자료 출처 (${len(sc.sources)}자)</b><div>${esc(sc.sources) || '—'}</div>
-        <b>AI 활용</b><div>${sc.aiUsed === 'yes' ? '사용함\n· 물어본 내용: ' + (esc(sc.aiAsked) || '—') + '\n· 발표에 활용한 것: ' + (esc(sc.aiPart) || '—') : sc.aiUsed === 'no' ? '사용 안 함' : '—'}</div>
-        <b>캔바</b><div>${sc.canva ? '<a href="' + esc(sc.canva) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(sc.canva) + '</a>' : '—'}</div>
-      </div>`;
-    const pr = g.prep || {};
-    return `<details data-id="${s.id}"><summary><b>${s.num}번 ${esc(s.name)}</b>
-        <span class="n-ok kwtag" style="font-size:.76rem;${p ? '' : 'display:none'}">${p ? esc(p.kw) : ''}</span>
-        <span class="gbadge ${g.total != null ? 'y' : 'n'}" id="gb-${s.id}">${g.total != null ? '채점 ' + g.total + '/20' : '미채점'}</span></summary>
-      <div class="body">${body}
-        <div class="gform">
-          <div class="grow"><label>① 발표 준비하기 (5점)</label>
-            <div class="sub">선정 이유 ${sel(s.id, 'pr', [[1, '1'], [0, '0']], pr.r)} 대본 ${sel(s.id, 'ps', [[2, '2'], [1, '1'], [0, '0']], pr.s)} 자료 출처 ${sel(s.id, 'po', [[2, '2'], [1, '1'], [0, '0']], pr.o)}
-            <button class="mini" type="button" onclick="suggestPrep('${s.id}')">자동 제안</button> → <b id="pt-${s.id}">${g.prepTotal != null ? g.prepTotal : '—'}</b>점 <span>(최하 1점)</span></div></div>
-          <div class="grow"><label>② 과학적 의사소통 (2점)</label>${sel(s.id, 'comm', OPT.comm, g.comm)}</div>
-          <div class="grow"><label>③-1 설명 전략 (2점)</label>${sel(s.id, 'strat', OPT.strat, g.strat)}<span class="sub">가독성·시인성·배치</span></div>
-          <div class="grow"><label>③-2 개념 전달 (2점)</label>${sel(s.id, 'concept', OPT.concept, g.concept)}</div>
-          <div class="grow"><label>③-3 시간 관리 (2점)</label>${sel(s.id, 'time', OPT.time, g.time)}</div>
-          <div class="grow"><label>④ 지식 내재화 (2점)</label>${sel(s.id, 'mem', OPT.mem, g.mem)}</div>
-          <div class="grow"><label>⑤ 청취자 평가 (5점)</label>
-            <div class="sub">동료평가 작성 <input type="number" min="0" max="${size}" id="g-${s.id}-pc" value="${g.peerCount != null ? g.peerCount : ''}" oninput="peerFromCount('${s.id}',${size})"> / ${size}명 →
-            ${sel(s.id, 'peer', OPT.peer, g.peer)}</div></div>
-          <div class="grow"><label>메모</label><input type="text" id="g-${s.id}-memo" value="${esc(g.memo || '')}" style="flex:1;min-width:200px" placeholder="(선택)"></div>
-          <div class="grow"><span class="tot">합계 <span id="tt-${s.id}">${g.total != null ? g.total : '—'}</span> / 20</span>
-            <button class="mini" style="padding:9px 16px" onclick="saveGrade('${s.id}')">💾 채점 저장</button>
-            ${p ? '<button class="mini danger" onclick="clearPick(\'' + s.id + '\')">주제 선택 해제</button>' : ''}</div>
-        </div></div></details>`;
-  }).join('') + `</div>`;
-  list.forEach(s => calc(s.id, true));
-}
-
-function v(id, f) { const x = $('g-' + id + '-' + f); return x && x.value !== '' ? Number(x.value) : null; }
-window.calc = function (id, quiet) {
-  const r = v(id, 'pr'), s = v(id, 'ps'), o = v(id, 'po');
-  const prepSet = r != null && s != null && o != null;
-  const prep = prepSet ? Math.max(1, r + s + o) : null;
-  $('pt-' + id).textContent = prep != null ? prep : '—';
-  const parts = [prep, v(id, 'comm'), v(id, 'strat'), v(id, 'concept'), v(id, 'time'), v(id, 'mem'), v(id, 'peer')];
-  const sum = parts.reduce((a, x) => a + (x || 0), 0);
-  const any = parts.some(x => x != null);
-  $('tt-' + id).textContent = any ? sum + (parts.every(x => x != null) ? '' : ' (일부 미입력)') : '—';
-  return { prep, parts, sum, complete: parts.every(x => x != null) };
-};
-window.peerFromCount = function (id, size) {
-  const c = $('g-' + id + '-pc').value;
-  if (c === '' || !size) return;
-  const pct = Number(c) / size * 100;
-  $('g-' + id + '-peer').value = pct >= 90 ? 5 : pct >= 70 ? 4 : pct >= 50 ? 3 : pct >= 30 ? 2 : 1;
-  calc(id);
-};
-window.suggestPrep = function (id) {
-  const sc = scripts[id] || {};
-  $('g-' + id + '-pr').value = (sc.reason || '').trim() ? 1 : 0;
-  $('g-' + id + '-ps').value = (sc.script || '').trim() ? 2 : 0;
-  const hasSrc = (sc.sources || '').trim(), aiOk = sc.aiUsed === 'no' || (sc.aiUsed === 'yes' && (sc.aiAsked || '').trim() && (sc.aiPart || '').trim());
-  $('g-' + id + '-po').value = hasSrc && aiOk ? 2 : hasSrc || sc.aiUsed ? 1 : 0;
-  calc(id);
-};
-window.saveGrade = async function (id) {
-  const c = calc(id);
-  const peerCount = $('g-' + id + '-pc').value;
-  const rec = {
-    prep: { r: v(id, 'pr'), s: v(id, 'ps'), o: v(id, 'po') }, prepTotal: c.prep,
-    comm: v(id, 'comm'), strat: v(id, 'strat'), concept: v(id, 'concept'), time: v(id, 'time'), mem: v(id, 'mem'),
-    peer: v(id, 'peer'), peerCount: peerCount === '' ? null : Number(peerCount),
-    memo: $('g-' + id + '-memo').value.trim(), total: c.complete ? c.sum : null, partial: c.sum, ts: Date.now()
-  };
-  if (!c.complete && !confirm('입력하지 않은 항목이 있어요. 지금까지 입력한 내용만 저장할까요? (합계는 모든 항목을 입력해야 확정돼요)')) return;
-  try {
-    await dbPut(base + '/grades/' + id, rec);
-    grades[id] = rec;
-    const gb = $('gb-' + id); gb.className = 'gbadge ' + (rec.total != null ? 'y' : 'n'); gb.textContent = rec.total != null ? '채점 ' + rec.total + '/20' : '임시 저장';
-    renderOverview();
-    toast('✅ 저장했어요');
+    picks[id] = rec; (plog[id] = plog[id] || {})[rec.ts] = rec;
+    renderGrid(); refreshTopicSec(id); toast('✅ 주제를 복원했어요');
   } catch (e) { alert(e.message); }
 };
 window.clearPick = async function (id) {
   const p = picks[id]; if (!p) return;
   if (!confirm(`${p.name} 학생의 주제 선택을 해제할까요?\n(학생이 다시 고를 수 있고, 써 둔 대본은 남아요)`)) return;
-  try { await dbDel(base + '/picks/' + id); delete picks[id]; await logPickCancel(base, id, 'teacher'); (plog[id] = plog[id] || {})[Date.now()] = { cancel: true, by: 'teacher', ts: Date.now() }; renderOverview(); const tp = $('tp-' + id); if (tp) tp.innerHTML = topicCell({ id }); renderOverlap(); document.querySelectorAll('details[data-id="' + id + '"] .mini.danger').forEach(b => b.remove()); toast('선택을 해제했어요 (열람 카드는 새로고침하면 갱신돼요)'); } catch (e) { alert(e.message); }
+  try {
+    await dbDel(base + '/picks/' + id); delete picks[id];
+    await logPickCancel(base, id, 'teacher'); (plog[id] = plog[id] || {})[Date.now()] = { cancel: true, by: 'teacher', ts: Date.now() };
+    renderGrid(); refreshTopicSec(id);
+    if ($('ovBody')) showOverlap();
+    toast('선택을 해제했어요');
+  } catch (e) { alert(e.message); }
 };
+function dupsOf(id) {
+  const p = picks[id]; if (!p || !p.no) return [];
+  return Object.values(picks).filter(o => o && o.id !== id && String(o.grade) === String(p.grade) && String(o.ban) === String(p.ban) && o.no === p.no);
+}
+
+/* ---------- 메인 표: 작성 현황(글자수) + 점수 ---------- */
+function renderGrid() {
+  list = classList();
+  let h = `<tr><th rowspan="2">번호</th><th rowspan="2">이름</th><th rowspan="2">주제</th>` +
+    `<th colspan="5" class="grp sep">작성 현황 (글자수)</th><th colspan="${COLS.length + 1}" class="grp sep">점수</th><th rowspan="2">메모</th></tr>` +
+    `<tr><th class="sep">선정 이유</th><th style="min-width:150px">대본 <small>공백 포함</small></th><th>자료 출처</th><th>AI</th><th>캔바</th>` +
+    COLS.map((c, i) => `<th${i === 0 ? ' class="sep"' : ''}>${c.short}<small>/${c.max}</small></th>`).join('') + `<th>합계<small>/20</small></th></tr>`;
+  list.forEach((s, i) => {
+    const sc = scripts[s.id] || {}, g = grades[s.id];
+    const nr = len(sc.reason), ns = len(sc.script), no = len(sc.sources);
+    const t = totalOf(g);
+    h += `<tr class="stu" onclick="openStu(${i})"><td>${s.num}</td><td class="name">${esc(s.name)}${dupsOf(s.id).length ? ' <span class="gbadge" style="background:#fff4e6;color:#c26a00">겹침</span>' : ''}</td>` +
+      `<td class="topic">${topicCell(s)}</td>` +
+      `<td class="sep ${nCls(nr) === 'n-none' ? 'n-none' : 'n-ok'}">${nr || '—'}</td>` +
+      `<td style="text-align:left"><span class="bar"><i style="width:${Math.min(ns / 1300, 1) * 100}%;background:${barColor(ns)}"></i><b style="left:${700 / 13}%"></b><b style="left:${1050 / 13}%"></b></span><span class="${nCls(ns)}">${ns || '—'}</span></td>` +
+      `<td class="${no ? 'n-ok' : 'n-none'}">${no || '—'}</td>` +
+      `<td>${sc.aiUsed === 'yes' ? 'AI 사용' : sc.aiUsed === 'no' ? '안 씀' : '<span class="n-none">—</span>'}</td>` +
+      `<td>${sc.canva ? `<a class="ok-dot" href="${esc(sc.canva)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">✔</a>` : '<span class="no-dot">○</span>'}</td>` +
+      COLS.map((c, k) => { const v = colVal(g, c.id); return `<td class="sc${v == null ? ' empty' : ''}${k === 0 ? ' sep' : ''}">${v == null ? '-' : v}</td>`; }).join('') +
+      `<td class="total${t.done ? '' : ' part'}">${t.any ? t.sum : ''}</td><td class="memo">${g && g.memo ? esc(g.memo) : ''}</td></tr>`;
+  });
+  const cnt = f => list.filter(f).length;
+  const scr = list.map(s => len((scripts[s.id] || {}).script)).filter(n => n > 0);
+  const avg = id => { const v = list.map(s => colVal(grades[s.id], id)).filter(x => x != null); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(1) : '-'; };
+  h += `<tr class="sum"><td></td><td class="name">${list.length}명</td><td style="text-align:left">선택 ${cnt(s => picks[s.id])}명</td>` +
+    `<td class="sep">${cnt(s => len((scripts[s.id] || {}).reason))}</td><td style="text-align:left">${scr.length}명 · 평균 ${scr.length ? Math.round(scr.reduce((a, b) => a + b, 0) / scr.length) : 0}자</td>` +
+    `<td>${cnt(s => len((scripts[s.id] || {}).sources))}</td><td></td><td>${cnt(s => (scripts[s.id] || {}).canva)}</td>` +
+    COLS.map((c, k) => `<td${k === 0 ? ' class="sep"' : ''} title="평균">${avg(c.id)}</td>`).join('') + `<td title="채점 완료 인원">${cnt(s => totalOf(grades[s.id]).done)}명</td><td></td></tr>`;
+  $('grid').innerHTML = h;
+  const restorable = cnt(s => !picks[s.id] && candOf(s.id));
+  const dupN = new Set(list.filter(s => dupsOf(s.id).length).map(s => picks[s.id].no)).size;
+  $('summary').innerHTML = `<div><b>${list.length}</b>학생</div><div><b>${cnt(s => picks[s.id])}</b>주제 선택${restorable ? `<br><span style="color:#c26a00">복원 가능 ${restorable}</span>` : ''}</div>` +
+    `<div><b>${scr.length}</b>대본</div><div><b>${cnt(s => len((scripts[s.id] || {}).sources))}</b>자료 출처</div><div><b>${cnt(s => (scripts[s.id] || {}).canva)}</b>캔바</div><div><b>${cnt(s => totalOf(grades[s.id]).done)}</b>채점 완료</div>`;
+  $('dupBtn').textContent = dupN ? `⚠️ 겹치는 주제 ${dupN}개` : '⚠️ 겹치는 주제';
+}
+
+/* ---------- 학생별 채점 창 ---------- */
+function txt(v, extra) { return has(v) && String(v).trim() ? `<div${extra ? ' class="' + extra + '"' : ''}>${esc(v)}</div>` : '<div class="none">(빈칸)</div>'; }
+function ptsHtml(c, g) {
+  const arr = []; for (let p = c.max; p >= c.min; p--) arr.push(p);
+  return `<div class="pts" data-crit="${c.id}">` + arr.map(p => `<button data-p="${p}" class="${g && has(g[c.id]) && +g[c.id] === p ? 'on' : ''}" onclick="setScore('${c.id}',${p})">${p}</button>`).join('') +
+    `<button class="clear" onclick="setScore('${c.id}',null)">지우기</button></div>`;
+}
+function rubHtml(c) { return '<div class="rub">' + c.rubric.map(([p, d]) => `<div>${p !== '' ? `<i>${p}</i> ` : ''}${esc(d)}</div>`).join('') + '</div>'; }
+function critRow(c, g, ansHtml, extra) {
+  return `<div class="crit"><div class="ans">${ansHtml}</div><div class="scorebox"><div class="ttl">${esc(c.label)} <span class="dc-muted">/${c.max}${c.min ? ` · 최하 ${c.min}` : ''}</span></div>${extra || ''}${ptsHtml(c, g)}${rubHtml(c)}</div></div>`;
+}
+function suggest(id) {
+  const sc = scripts[id] || {};
+  const aiOk = sc.aiUsed === 'no' || (sc.aiUsed === 'yes' && (sc.aiAsked || '').trim() && (sc.aiPart || '').trim());
+  return { pr: (sc.reason || '').trim() ? 1 : 0, ps: (sc.script || '').trim() ? 2 : 0, po: (sc.sources || '').trim() && aiOk ? 2 : ((sc.sources || '').trim() || sc.aiUsed) ? 1 : 0 };
+}
+function topicSec(s) {
+  const p = picks[s.id], c = candOf(s.id), d = dupsOf(s.id);
+  let body;
+  if (p) body = `${unitTag(p.unit)} ${p.kind === 'custom' ? '<span class="gbadge" style="background:#f3e8ff;color:#7b2cbf">직접 작성</span>' : `<span class="dc-muted">#${p.no}</span>`} <b>${esc(p.topic)}</b> <span class="dc-muted">[${esc(p.kw)}]</span>${p.restored ? ' <span class="dc-muted">(복원됨)</span>' : ''}` +
+    (d.length ? `<div class="dup">⚠️ 같은 반 ${d.map(o => esc(o.name)).join(', ')} 학생과 겹침</div>` : '') +
+    ` <button class="mini danger" style="margin-left:6px" onclick="clearPick('${s.id}')">주제 선택 해제</button>`;
+  else if (c) body = `<span class="gbadge" style="background:#fff4e6;color:#c26a00">기록 없음 · 복원 가능</span> 추정: <b>${esc(c.topic)}</b> <button class="mini" onclick="restoreFor('${s.id}')">복원</button>`;
+  else body = '<span class="dc-muted">주제를 아직 고르지 않았어요.</span>';
+  return `<div class="sec" id="topicSec"><h4>📌 발표 주제</h4><div style="font-size:.88rem;line-height:1.7">${body}</div></div>`;
+}
+function refreshTopicSec(id) { const el = $('topicSec'); if (el && curIdx >= 0 && list[curIdx] && list[curIdx].id === id) el.outerHTML = topicSec(list[curIdx]); }
+
+window.openStu = function (i) {
+  if (i < 0 || i >= list.length) return;
+  curIdx = i;
+  const s = list[i], g = grades[s.id] || {}, sc = scripts[s.id] || {}, t = totalOf(g), sg = suggest(s.id);
+  const C = id => CRIT.find(c => c.id === id);
+  const ns = len(sc.script);
+  let h = `<div class="mhead"><h3>${s.num}번 ${esc(s.name)} <span class="dc-muted" style="font-size:0.8rem">${s.id} · 합계 <b id="mTotal">${t.any ? t.sum : '-'}</b>/20${sc.updatedAt ? ' · 마지막 저장 ' + fmtT(sc.updatedAt) : ''}</span></h3>` +
+    `<button class="btn small secondary" onclick="openStu(${i - 1})" ${i <= 0 ? 'disabled' : ''}>◀ 이전</button>` +
+    `<button class="btn small secondary" onclick="openStu(${i + 1})" ${i >= list.length - 1 ? 'disabled' : ''}>다음 ▶</button>` +
+    `<button class="btn small secondary" onclick="closeModal()">닫기</button></div>`;
+  h += topicSec(s);
+
+  // ① 발표 준비하기
+  h += `<div class="sec"><h4>① 발표 준비하기 <span class="subtot" id="prepTot">${prepOf(g) != null ? prepOf(g) : '-'} / 5</span><span class="dc-muted" style="font-weight:400;font-size:.76rem">세 칸 합계 · 최하 1점</span>` +
+    `<button class="mini" onclick="applySuggest()">작성 상태로 자동 채점 (이유 ${sg.pr} · 대본 ${sg.ps} · 출처 ${sg.po})</button></h4>`;
+  h += critRow(C('pr'), g, `<b>선정 이유 (${len(sc.reason)}자)</b>${txt(sc.reason)}`);
+  h += critRow(C('ps'), g, `<b>대본 (${ns.toLocaleString()}자 · 예상 ${fmtDur(ns)}) <span class="${nCls(ns)}">${ns === 0 ? '' : ns < MIN_OK ? '짧음' : ns <= MAX_OK ? '적정' : '김'}</span></b>${txt(sc.script, 'scroll')}`);
+  h += critRow(C('po'), g, `<b>자료 출처 (${len(sc.sources)}자)</b>${txt(sc.sources)}` +
+    `<b>AI 활용</b>${sc.aiUsed === 'yes' ? `<div>사용함</div><b>AI에게 물어본 내용</b>${txt(sc.aiAsked)}<b>발표에 활용한 것</b>${txt(sc.aiPart)}` : sc.aiUsed === 'no' ? '<div>사용 안 함</div>' : '<div class="none">(선택 안 함)</div>'}`);
+  h += '</div>';
+
+  // ②~④ 발표 당일
+  const canva = sc.canva ? `<b>발표 자료</b><div><a href="${esc(sc.canva)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">🎨 캔바 열기</a></div>` : '<b>발표 자료</b><div class="none">(캔바 링크 없음)</div>';
+  const day = '<div class="dayonly">발표 때 관찰해서 채점해요.</div>';
+  h += `<div class="sec"><h4>②~④ 발표 당일 평가</h4>`;
+  h += critRow(C('comm'), g, day);
+  h += critRow(C('strat'), g, canva);
+  h += critRow(C('concept'), g, day);
+  h += critRow(C('time'), g, `<b>참고: 대본 길이로 본 예상 시간</b><div>${ns ? fmtDur(ns) + ' (공백 포함 ' + ns.toLocaleString() + '자)' : '<span class="none">대본 없음</span>'}</div>`);
+  h += critRow(C('mem'), g, day);
+  h += '</div>';
+
+  // ⑤ 청취자 평가
+  const size = list.length;
+  h += `<div class="sec"><h4>⑤ 청취자 평가 제공하기</h4>` +
+    critRow(C('peer'), g, `<b>동료평가 작성 수</b><div>작성 <input type="number" class="peer-in" id="peerCnt" min="0" max="${size}" value="${has(g.peerCount) ? g.peerCount : ''}"> / 학급 ${size}명 <span class="dc-muted" id="peerPct"></span></div><div class="dc-muted" style="font-size:.76rem">숫자를 넣고 칸을 벗어나면 비율로 점수가 자동 선택·저장돼요.</div>`) + '</div>';
+
+  h += `<div class="sec"><h4>📝 메모</h4><input class="memo-in" id="memoIn" value="${esc(g.memo || '')}" placeholder="채점 메모 (Enter 또는 칸을 벗어나면 저장)"><div class="savestate" id="saveState"></div></div>`;
+  $('modalBody').innerHTML = h;
+  $('modal').classList.add('show');
+  const memo = $('memoIn');
+  memo.addEventListener('change', () => saveScores({ memo: memo.value.trim() }));
+  memo.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) memo.blur(); });
+  const pc = $('peerCnt');
+  const showPct = () => { $('peerPct').textContent = pc.value !== '' && size ? `(${Math.round(+pc.value / size * 100)}%)` : ''; };
+  showPct();
+  pc.addEventListener('input', showPct);
+  pc.addEventListener('change', () => {
+    if (pc.value === '') { saveScores({ peerCount: null }); return; }
+    const pct = +pc.value / size * 100, p = pct >= 90 ? 5 : pct >= 70 ? 4 : pct >= 50 ? 3 : pct >= 30 ? 2 : 1;
+    markBtns('peer', p); saveScores({ peerCount: +pc.value, peer: p });
+  });
+};
+window.closeModal = function () { $('modal').classList.remove('show'); curIdx = -1; renderGrid(); };
+
+function markBtns(cid, p) { document.querySelectorAll(`.pts[data-crit="${cid}"] button:not(.clear)`).forEach(b => b.classList.toggle('on', +b.dataset.p === p)); }
+window.setScore = function (cid, p) { markBtns(cid, p); saveScores({ [cid]: p }); };
+window.applySuggest = function () { const sg = suggest(list[curIdx].id); ['pr', 'ps', 'po'].forEach(k => markBtns(k, sg[k])); saveScores(sg); };
+
+async function saveScores(patch) {
+  const s = list[curIdx]; if (!s) return;
+  const st = $('saveState');
+  const rec = Object.assign({ id: s.id, name: s.name, num: s.num }, grades[s.id] || {}, patch);
+  Object.keys(rec).forEach(k => { if (rec[k] === null || rec[k] === '') delete rec[k]; });
+  const t = totalOf(rec);
+  rec.prep = prepOf(rec); if (rec.prep == null) delete rec.prep;
+  rec.total = t.done ? t.sum : null; if (rec.total == null) delete rec.total;
+  rec.updatedAt = Date.now();
+  if (st) st.textContent = '저장 중...';
+  try {
+    await dbPut(base + '/grades/' + s.id, rec);
+    grades[s.id] = rec;
+    if ($('mTotal')) $('mTotal').textContent = t.any ? t.sum + (t.done ? '' : ' (채점 중)') : '-';
+    if ($('prepTot')) $('prepTot').textContent = (prepOf(rec) != null ? prepOf(rec) : '-') + ' / 5';
+    if (st) st.textContent = `✓ 저장됨 ${new Date().toLocaleTimeString()}`;
+  } catch (e) {
+    if (st) st.textContent = '⚠️ 저장 실패 — 다시 눌러 주세요';
+    alert('점수 저장 실패: ' + e.message);
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (!$('modal').classList.contains('show')) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Escape') closeModal();
+  if ($('ovBody')) return;
+  if (e.key === 'ArrowRight') openStu(curIdx + 1);
+  if (e.key === 'ArrowLeft') openStu(curIdx - 1);
+});
 
 /* ---------- 겹치는 주제 ---------- */
-function renderOverlap() {
-  const list = classList(), ids = new Set(list.map(s => s.id));
+window.showOverlap = function () {
+  list = classList(); curIdx = -1;
   const byNo = {};
   list.forEach(s => { const p = picks[s.id]; if (p && p.no) (byNo[p.no] = byNo[p.no] || []).push(s); });
   const dups = Object.entries(byNo).filter(([, a]) => a.length > 1);
-  $('v-overlap').innerHTML = dups.length ? `<div class="notice warn">같은 주제를 고른 학생들이에요. 가위바위보 후 진 학생의 <b>주제 선택을 해제</b>하면 다시 고를 수 있어요.</div>` +
-    dups.map(([no, a]) => `<div class="card"><div class="tc-topic" style="margin-bottom:8px">#${no} ${esc(TOPICS[no - 1].topic)}</div>
-      ${a.map(s => `<div class="grow"><b style="width:120px">${s.num}번 ${esc(s.name)}</b><button class="mini danger" onclick="clearPick('${s.id}')">선택 해제</button></div>`).join('')}</div>`).join('')
-    : '<div class="empty-state">겹치는 주제가 없어요. 👍</div>';
-}
+  $('modalBody').innerHTML = `<div class="mhead" id="ovBody"><h3>⚠️ 겹치는 주제 <span class="dc-muted" style="font-size:.8rem">· ${curKey.replace('-', '학년 ')}반 · ${dups.length}개</span></h3><button class="btn small secondary" onclick="closeModal()">닫기</button></div>` +
+    (dups.length ? `<p class="hint">가위바위보 후 진 학생의 <b>선택 해제</b>를 누르면 그 학생이 다시 고를 수 있어요. (써 둔 대본은 남아요)</p>` +
+      dups.map(([no, a]) => `<div class="sec"><h4>#${no} ${esc(TOPICS[no - 1].topic)}</h4>${a.map(s => `<div style="display:flex;gap:10px;align-items:center;margin:6px 0"><b style="width:120px">${s.num}번 ${esc(s.name)}</b><button class="mini danger" onclick="clearPick('${s.id}')">선택 해제</button></div>`).join('')}</div>`).join('')
+      : '<div class="empty-state">겹치는 주제가 없어요. 👍</div>');
+  $('modal').classList.add('show');
+};
 
 /* ---------- CSV ---------- */
 window.exportCsv = function () {
-  const list = classList();
-  const head = ['반', '번호', '학번', '이름', '단원', '키워드', '주제', '선정이유(자)', '대본(자)', '출처(자)', 'AI', '캔바', '준비하기(5)', '의사소통(2)', '설명전략(2)', '개념전달(2)', '시간관리(2)', '내재화(2)', '청취자평가(5)', '합계(20)', '메모'];
+  list = classList();
+  const head = ['반', '번호', '학번', '이름', '단원', '키워드', '주제', '선정이유(자)', '대본(자)', '출처(자)', 'AI', '캔바', '선정이유(1)', '대본(2)', '출처(2)', '준비하기(5)', '의사소통(2)', '설명전략(2)', '개념전달(2)', '시간관리(2)', '내재화(2)', '동료평가 작성수', '청취자평가(5)', '합계(20)', '메모'];
   const q = x => '"' + String(x == null ? '' : x).replace(/"/g, '""') + '"';
   const rows = list.map(s => {
-    const p = picks[s.id] || {}, sc = scripts[s.id] || {}, g = grades[s.id] || {};
+    const p = picks[s.id] || {}, sc = scripts[s.id] || {}, g = grades[s.id] || {}, t = totalOf(g);
     return [curKey, s.num, s.id, s.name, p.unit, p.kw, p.topic, len(sc.reason), len(sc.script), len(sc.sources), sc.aiUsed === 'yes' ? '사용' : sc.aiUsed === 'no' ? '안 씀' : '', sc.canva || '',
-      g.prepTotal, g.comm, g.strat, g.concept, g.time, g.mem, g.peer, g.total, g.memo].map(q).join(',');
+      g.pr, g.ps, g.po, prepOf(g), g.comm, g.strat, g.concept, g.time, g.mem, g.peerCount, g.peer, t.done ? t.sum : '', g.memo].map(q).join(',');
   });
   const blob = new Blob(['﻿' + [head.map(q).join(','), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `페임랩발표_${curKey}.csv`; a.click();
+  a.download = `페임랩발표_채점_${curKey}.csv`; a.click();
 };
 
 try { if (sessionStorage.getItem('sciTeacher') === '1') start(); } catch (e) {}

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기본 개념</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="pres.css?v=11">
+<style>
+.jump { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.jump a { font-size: .76rem; font-weight: 700; padding: 6px 10px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--border); color: var(--text-muted); text-decoration: none; }
+.jump a.bonus { background: #fff3bf; border-color: #fcc419; color: #8a6100; }
+.cc { background: var(--surface); border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-size: .86rem; line-height: 1.7; }
+.cc h2 { font-size: .98rem; margin: 0 0 8px; color: var(--accent); }
+.cc ul { margin: 0; padding-left: 18px; }
+.cc li { margin: 3px 0; }
+.key { background: #e7ecff; border-radius: 8px; padding: 8px 12px; margin-top: 8px; font-weight: 700; color: #2b45b8; }
+.bonus-wrap { border: 2.5px solid #fcc419; border-radius: 18px; padding: 14px 12px 4px; margin: 22px 0 12px; background: #fffdf3; }
+.bonus-title { display: flex; align-items: center; gap: 8px; margin: 0 4px 12px; }
+.bonus-title b { font-size: 1.05rem; }
+.bonus-tag { background: #fcc419; color: #5c3d00; font-size: .7rem; font-weight: 800; padding: 2px 9px; border-radius: 999px; }
+.tbl-wrap { overflow-x: auto; }
+table.u { width: 100%; border-collapse: collapse; font-size: .8rem; line-height: 1.5; }
+table.u th, table.u td { border: 1px solid #e1e6f2; padding: 7px 8px; text-align: left; vertical-align: top; }
+table.u th { background: #f2f4fa; white-space: nowrap; }
+table.u td.c { text-align: center; white-space: nowrap; }
+.ladder .row { display: grid; grid-template-columns: 112px 1fr; gap: 8px; align-items: center; margin: 6px 0; font-size: .78rem; }
+.ladder .track { background: #eef1f7; border-radius: 6px; height: 18px; position: relative; overflow: hidden; }
+.ladder .fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #74c0fc, #3b5bdb); }
+.ladder .val { position: absolute; left: 8px; top: 0; line-height: 18px; font-weight: 800; color: #1c2b6b; font-size: .72rem; white-space: nowrap; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
+.cmp { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; font-weight: 800; font-size: .92rem; margin: 6px 0 2px; }
+.cmp span { background: #fff; border: 2px solid #3b5bdb; color: #3b5bdb; border-radius: 10px; padding: 4px 10px; }
+.cmp i { font-style: normal; color: var(--text-muted); }
+.warn { background: #fff4e6; border-left: 4px solid #ff922b; border-radius: 8px; padding: 8px 12px; margin: 6px 0; }
+.qa details { border-top: 1px dashed #e1e6f2; padding: 8px 0; }
+.qa summary { cursor: pointer; font-weight: 700; }
+.qa .ans { color: #2f9e44; font-weight: 700; margin-top: 4px; }
+.ucards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.ucard { border: 1.5px solid #dbe4ff; border-radius: 12px; padding: 10px 12px; background: #f8faff; }
+.uname { font-size: 1rem; color: #2b45b8; margin-bottom: 4px; }
+.uname span { font-size: .74rem; color: var(--text-muted); font-weight: 600; }
+.urow { display: grid; grid-template-columns: 52px 1fr; gap: 6px; font-size: .8rem; line-height: 1.55; margin: 2px 0; }
+.urow i { font-style: normal; font-size: .7rem; font-weight: 700; color: var(--text-muted); padding-top: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>📖 기본 개념</h1><p id="who"></p></div>
+  <div id="nav" class="nav"></div>
+
+  <div class="jump">
+    <a href="#c1">① 별까지의 거리</a><a href="#c2">② 밝기와 등급</a><a href="#c3">③ 색과 온도</a>
+    <a href="#c4">④ 우리은하</a><a href="#c5">⑤ 팽창하는 우주</a><a href="#c6">⑥ 우주 탐사</a>
+    <a href="#bonus" class="bonus">⭐ 보너스: 거리 단위</a>
+  </div>
+
+  <div class="cc" id="c1">
+    <h2>① 별까지의 거리 — 연주 시차</h2>
+    <ul>
+      <li><b>시차</b> : 떨어진 두 곳에서 한 물체를 볼 때 생기는 각. 물체가 <b>가까울수록 크다</b>.</li>
+      <li><b>연주 시차</b> : 지구가 공전하는 동안 <b>6개월 간격</b>으로 같은 별을 관측해 잰 시차의 <b>1/2</b>. 단위는 초(″) — 1° = 60′ = 3600″</li>
+      <li><b>별까지의 거리(pc) = 1 ÷ 연주 시차(″)</b> → 연주 시차와 거리는 <b>반비례</b></li>
+      <li>약 100 pc보다 먼 별은 연주 시차가 너무 작아 재기 어렵다.</li>
+    </ul>
+    <div class="key">예) 연주 시차 0.5″ → 1 ÷ 0.5 = 2 pc</div>
+  </div>
+
+  <div class="cc" id="c2">
+    <h2>② 별의 밝기와 등급</h2>
+    <ul>
+      <li>별의 밝기는 <b>거리의 제곱에 반비례</b> : 거리가 2배가 되면 밝기는 1/4.</li>
+      <li><b>등급</b> : 숫자가 <b>작을수록 밝다</b>. 1등급 차이 ≈ 2.5배, <b>5등급 차이 = 100배</b>.</li>
+      <li><b>겉보기 등급</b> : 지구에서 눈에 보이는 밝기</li>
+      <li><b>절대 등급</b> : 모든 별을 <b>10 pc(약 32.6광년)</b> 거리에 놓았다고 할 때의 밝기 → 별의 <b>실제 밝기</b>를 비교할 수 있다.</li>
+    </ul>
+    <div class="key">겉보기 등급 &lt; 절대 등급(숫자) 이면 10 pc보다 가까운 별!</div>
+  </div>
+
+  <div class="cc" id="c3">
+    <h2>③ 별의 색과 표면 온도</h2>
+    <ul>
+      <li>표면 온도가 <b>높을수록 파란색</b>, <b>낮을수록 붉은색</b>을 띤다.</li>
+      <li>색 순서 (온도 높음 → 낮음) : 청색 → 청백색 → 백색 → 황백색 → 황색 → 주황색 → 적색</li>
+      <li>태양 : 표면 온도 약 6000 K, <b>황색</b> 별</li>
+    </ul>
+  </div>
+
+  <div class="cc" id="c4">
+    <h2>④ 우리은하</h2>
+    <ul>
+      <li>태양계가 속한 은하. 별 약 <b>2천억 개</b>, 지름 약 <b>3만 pc(약 10만 광년)</b></li>
+      <li>위에서 보면 중심부에 막대 구조가 있는 <b>나선 모양</b>, 옆에서 보면 중심부가 볼록한 <b>원반 모양</b></li>
+      <li>태양계는 은하 중심이 아니라 <b>나선팔</b>에 있다. 밤하늘의 <b>은하수</b>는 우리은하의 원반을 안쪽에서 본 모습.</li>
+      <li>구성 천체 : 성단(산개 성단·구상 성단), 성운(방출·반사·암흑 성운), 성간 물질</li>
+    </ul>
+    <div class="key">지구 ⊂ 태양계 ⊂ 우리은하 ⊂ 우주</div>
+  </div>
+
+  <div class="cc" id="c5">
+    <h2>⑤ 팽창하는 우주</h2>
+    <ul>
+      <li>멀리 있는 은하일수록 <b>더 빠르게 멀어진다</b> → 우주는 <b>팽창</b>하고 있다.</li>
+      <li>팽창에는 <b>중심이 없다</b> (풍선 표면에 붙인 스티커 모형 : 모든 스티커 사이가 서로 멀어짐)</li>
+      <li><b>빅뱅 우주론</b> : 약 <b>138억 년 전</b> 매우 뜨겁고 밀도가 높은 한 점에서 대폭발로 우주가 시작되어 팽창해 왔다.</li>
+      <li>증거 : 은하들이 멀어지는 현상, <b>우주 배경 복사</b>(빅뱅의 흔적으로 남은 빛)</li>
+    </ul>
+  </div>
+
+  <div class="cc" id="c6">
+    <h2>⑥ 우주 탐사</h2>
+    <ul>
+      <li>수단 : 지상 망원경, <b>우주 망원경</b>(허블·제임스 웹), <b>탐사선</b>(보이저·뉴호라이즌스), 인공위성, 국제 우주 정거장</li>
+      <li>의의 : 우주와 지구에 대한 이해 확대, 위성 통신·내비게이션·일기 예보 등 생활 속 기술로 활용</li>
+      <li>과제 : 우주 쓰레기, 막대한 비용 등</li>
+    </ul>
+  </div>
+
+  <!-- ===================== 보너스 ===================== -->
+  <div class="bonus-wrap" id="bonus">
+    <div class="bonus-title"><span class="bonus-tag">BONUS</span><b>⭐ 우주의 거리 단위 정리</b></div>
+
+    <div class="cc">
+      <h2>한눈에 보는 거리 단위</h2>
+      <div class="ucards"><div class="ucard"><div class="uname"><b>km</b> <span>킬로미터</span></div><div class="urow"><i>뜻</i><span>일상의 거리 단위</span></div><div class="urow"><i>크기</i><span>1 km = 1000 m</span></div><div class="urow"><i>쓰는 곳</i><span>지구 위, 지구 ↔ 달</span></div></div><div class="ucard"><div class="uname"><b>AU</b> <span>천문단위</span></div><div class="urow"><i>뜻</i><span><b>지구와 태양 사이의 평균 거리</b></span></div><div class="urow"><i>크기</i><span>약 1억 5천만 km</span></div><div class="urow"><i>쓰는 곳</i><span>태양계 안 (행성까지의 거리)</span></div></div><div class="ucard"><div class="uname"><b>광년</b> <span>ly</span></div><div class="urow"><i>뜻</i><span><b>빛이 1년 동안 가는 거리</b> (빛의 속도 ≈ 30만 km/s)</span></div><div class="urow"><i>크기</i><span>약 9조 5천억 km ≈ 6만 3천 AU</span></div><div class="urow"><i>쓰는 곳</i><span>별, 은하까지의 거리</span></div></div><div class="ucard"><div class="uname"><b>pc</b> <span>파섹</span></div><div class="urow"><i>뜻</i><span><b>연주 시차가 1″인 별까지의 거리</b></span></div><div class="urow"><i>크기</i><span>약 31조 km ≈ 3.26 광년 ≈ 20만 6천 AU</span></div><div class="urow"><i>쓰는 곳</i><span>별, 은하까지의 거리 (연주 시차 계산)</span></div></div></div>
+      <div class="cmp"><span>1 AU</span><i>&lt;</i><span>1 광년</span><i>&lt;</i><span>1 pc</span></div>
+    </div>
+
+    <div class="cc">
+      <h2>꼭 기억할 환산</h2>
+      <ul>
+        <li><b>1 pc ≈ 3.26 광년</b> (거꾸로 1 광년 ≈ 0.31 pc)</li>
+        <li><b>1 광년 ≈ 9조 5천억 km</b> = 30만 km/s × 1년(약 3150만 초)</li>
+        <li><b>1 AU ≈ 1억 5천만 km</b> : 햇빛이 지구까지 오는 데 약 <b>8분 20초</b></li>
+        <li>더 큰 거리 : <b>kpc</b>(킬로파섹, 1000 pc), <b>Mpc</b>(메가파섹, 100만 pc) — 은하 사이 거리에 써요.</li>
+      </ul>
+      <div class="key">pc → 광년은 ×3.26, 광년 → pc는 ÷3.26</div>
+    </div>
+
+    <div class="cc">
+      <h2>빛으로 가면 얼마나 걸릴까?</h2>
+      <div class="tbl-wrap"><table class="u">
+        <tr><th>어디까지</th><th>거리</th><th>빛이 걸리는 시간</th></tr>
+        <tr><td>지구 → 달</td><td>약 38만 km</td><td class="c">약 1.3초</td></tr>
+        <tr><td>태양 → 지구</td><td>1 AU</td><td class="c">약 8분 20초</td></tr>
+        <tr><td>태양 → 목성</td><td>약 5.2 AU</td><td class="c">약 43분</td></tr>
+        <tr><td>태양 → 해왕성</td><td>약 30 AU</td><td class="c">약 4시간 10분</td></tr>
+        <tr><td>태양 → 프록시마 센타우리 (가장 가까운 별)</td><td>약 4.2 광년 (1.3 pc)</td><td class="c">약 4.2년</td></tr>
+        <tr><td>우리은하 끝에서 끝까지</td><td>약 10만 광년 (3만 pc)</td><td class="c">약 10만 년</td></tr>
+        <tr><td>우리은하 → 안드로메다은하</td><td>약 250만 광년</td><td class="c">약 250만 년</td></tr>
+      </table></div>
+      <div class="warn">💡 그래서 밤하늘의 별빛은 <b>과거의 빛</b>이에요. 안드로메다은하는 250만 년 전 모습을 보고 있는 거예요!</div>
+    </div>
+
+    <div class="cc">
+      <h2>우주의 거리 사다리 <span style="font-size:.74rem;color:var(--text-muted);font-weight:400">(막대는 한 눈금마다 10배씩 커지는 크기)</span></h2>
+      <div class="ladder" id="ladder"></div>
+      <div style="font-size:.74rem;color:var(--text-muted);margin-top:6px">* 우주의 나이는 약 138억 년이지만, 그동안 우주가 팽창해서 관측 가능한 우주의 지름은 약 930억 광년이에요.</div>
+    </div>
+
+    <div class="cc">
+      <h2>헷갈리기 쉬운 점</h2>
+      <div class="warn">❌ “광년은 시간 단위다” → ⭕ 광년은 <b>거리</b> 단위! (빛이 1년 동안 ‘가는 거리’)</div>
+      <div class="warn">❌ “1 pc가 1 광년보다 짧다” → ⭕ 1 pc ≈ 3.26 광년으로 <b>pc가 더 길다</b></div>
+      <div class="warn">❌ “연주 시차가 크면 멀다” → ⭕ 연주 시차가 <b>클수록 가깝다</b> (반비례)</div>
+    </div>
+
+    <div class="cc qa">
+      <h2>✏️ 연습 문제 <span style="font-size:.74rem;color:var(--text-muted);font-weight:400">(눌러서 정답 확인)</span></h2>
+      <details><summary>1. 연주 시차가 0.25″인 별까지의 거리는 몇 pc일까? 약 몇 광년일까?</summary><div class="ans">1 ÷ 0.25 = 4 pc → 4 × 3.26 ≈ 13 광년</div></details>
+      <details><summary>2. 시리우스는 약 8.6 광년 떨어져 있다. 오늘 밤 보는 시리우스의 빛은 언제 출발했을까?</summary><div class="ans">약 8.6년 전</div></details>
+      <details><summary>3. 태양에서 약 5.2 AU 떨어진 목성까지 햇빛이 가는 데 걸리는 시간은? (1 AU = 8분 20초)</summary><div class="ans">8분 20초 × 5.2 ≈ 43분</div></details>
+      <details><summary>4. 1 AU, 1 광년, 1 pc를 짧은 것부터 순서대로 쓰면?</summary><div class="ans">1 AU &lt; 1 광년 &lt; 1 pc</div></details>
+    </div>
+
+    <div class="cc">
+      <h2>🎤 발표에 활용하는 팁</h2>
+      <ul>
+        <li>가까운 거리는 <b>km·AU</b>, 별·은하까지는 <b>광년</b>으로 말하면 듣는 사람이 이해하기 쉬워요.</li>
+        <li>큰 숫자는 “빛의 속도로 ○년 걸리는 거리”처럼 <b>시간으로 바꿔</b> 말해 보세요.</li>
+        <li>단위는 발표 자료에 꼭 함께 적어 주세요. (예 : 4.2 광년 / 1.3 pc)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script src="session.js?v=10"></script>
+<script>
+const me = requireLogin();
+if (me) { document.getElementById('who').textContent = whoLabel(me); renderNav('concepts'); }
+// 거리 사다리 (km, 로그 눈금 10^5 ~ 10^24)
+const L = [['지구 ↔ 달', 3.84e5, '38만 km'], ['지구 ↔ 태양', 1.5e8, '1 AU'], ['태양 ↔ 해왕성', 4.5e9, '30 AU'],
+  ['가장 가까운 별', 4.0e13, '4.2 광년'], ['우리은하 지름', 9.5e17, '10만 광년'], ['안드로메다은하', 2.4e19, '250만 광년'], ['관측 가능한 우주*', 8.8e23, '930억 광년']];
+document.getElementById('ladder').innerHTML = L.map(([n, km, lab]) => {
+  const w = Math.max(8, (Math.log10(km) - 5) / 19 * 100);
+  return `<div class="row"><span>${n}</span><div class="track"><div class="fill" style="width:${w}%"></div><span class="val">${lab}</span></div></div>`;
+}).join('');
+</script>
+</body>
+</html>
