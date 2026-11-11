@@ -50,6 +50,13 @@
     var r = await fetch(DB_URL + '/' + path + '.json', { method: 'DELETE' });
     if (!r.ok) throw new Error('삭제에 실패했어요.');
   };
+  // 전학 등으로 이 발표회 명단에서 뺄 학번 (공용 students DB는 건드리지 않음)
+  // 3120 차수연 · 3125 박재련 · 3202 곽누리 · 3505 김태양 (2026-11-11 전학)
+  window.EXCLUDED_IDS = ['3120', '3125', '3202', '3505'];
+  window.rosterOf = function (r) {
+    return Object.entries(r || {}).filter(function (e) { return e[1] && window.EXCLUDED_IDS.indexOf(e[0]) < 0; })
+      .map(function (e) { return Object.assign({ id: e[0] }, e[1]); });
+  };
   window.basePath = async function () { return 'years/' + (await getCfg()).year + '/sciPres'; };
 
   // ---- 주제 선택 이력(picksLog) · 복원 ----
@@ -100,7 +107,7 @@
   };
 
   // ---- 페이지 이동 링크에 빌드 번호를 붙여 오래된 캐시 페이지가 뜨지 않게 함 ----
-  var BUILD = '15';
+  var BUILD = '16';
   window.bustLinks = function () {
     document.querySelectorAll('a[href]').forEach(function (a) {
       var h = a.getAttribute('href');

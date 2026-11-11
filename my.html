@@ -15,7 +15,7 @@
 </div>
 <div id="toastBox"></div>
 
-<script src="session.js?v=11"></script>
+<script src="session.js?v=12"></script>
 <script>
 const me = requireLogin();
 if (me && me.isTeacher) { alert('교사 계정은 전체 현황에서 볼 수 있어요.'); location.href = 'board.html'; }
@@ -170,7 +170,7 @@ function render() {
       <p class="hint" style="margin-bottom:10px">작성란은 아래에서 미리 볼 수 있어요. <b>주제를 고르면 작성할 수 있어요.</b></p>
       <a class="btn small" style="display:inline-block;text-decoration:none" href="pick.html">📌 주제 고르러 가기</a>
     </div>`;
-  el.innerHTML = topicCard + `
+  el.innerHTML = orderHtml() + topicCard + `
 
     <div class="checklist2"><b>📌 발표 준비하기 체크</b> <span class="wh">(채점은 선생님이 해요 · <a href="rubric.html" style="color:var(--accent)">평가기준 보기</a>)</span><div id="check"></div></div>
 
@@ -249,6 +249,17 @@ window.doRestore = async function () {
   } catch (e) { alert(e.message); if (btn) btn.disabled = false; }
 };
 
+// 발표 순서: 선생님이 교사 페이지에서 '저장'한 순서만 보임 (order/{학년-반})
+let ordRec = null;
+function orderHtml() {
+  if (!ordRec || !Array.isArray(ordRec.ids)) return '';
+  const ids = ordRec.ids.filter(id => !EXCLUDED_IDS.includes(id)), i = ids.indexOf(me.id);
+  if (i < 0) return '';
+  return `<div class="card" style="padding:14px 16px;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#4c6ef5,#748ffc);color:#fff">
+    <div style="font-size:2rem;font-weight:900;line-height:1;min-width:52px;text-align:center">${i + 1}<span style="font-size:.9rem">번째</span></div>
+    <div><b style="font-size:1rem">🎤 내 발표 순서</b><div style="font-size:.8rem;opacity:.9">우리 반 ${ids.length}명 중 ${i + 1}번째로 발표해요.${i > 0 ? ' (내 앞 순서: ' + i + '명)' : ' 첫 번째 발표자예요!'}</div></div></div>`;
+}
+
 async function showDups(all) {
   if (!pick || !pick.no) return;
   if (!all) { try { all = await dbGet(base + '/picks'); } catch (e) { return; } }
@@ -264,8 +275,8 @@ window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); 
   renderNav('my');
   try {
     base = await basePath();
-    const [p, s, all] = await Promise.all([dbGet(base + '/picks/' + me.id), dbGet(base + '/scripts/' + me.id), dbGet(base + '/picks')]);
-    pick = p; saved = s;
+    const [p, s, all, od] = await Promise.all([dbGet(base + '/picks/' + me.id), dbGet(base + '/scripts/' + me.id), dbGet(base + '/picks'), dbGet(base + '/order/' + me.grade + '-' + me.ban).catch(() => null)]);
+    pick = p; saved = s; ordRec = od;
     if (!pick) { try { cand = pickCandidate(await dbGet(base + '/picksLog/' + me.id), saved); } catch (e) {} }
     render();
     showDups(all);

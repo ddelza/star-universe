@@ -68,6 +68,18 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
 .subtot { font-size: .82rem; font-weight: 800; color: #fff; background: var(--accent); border-radius: 8px; padding: 2px 10px; }
 .savestate { font-size: 0.74rem; color: var(--text-muted); }
 .memo-in { width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.85rem; }
+/* 발표 순서 */
+.ord-state { font-size: .8rem; font-weight: 700; padding: 3px 10px; border-radius: 8px; }
+.ord-state.saved { background: #d3f9d8; color: #2b8a3e; } .ord-state.dirty { background: #fff4e6; color: #c26a00; } .ord-state.none { background: #f1f3f5; color: #868e96; }
+.ord-list { list-style: none; margin: 0; padding: 0; }
+.ord-list li { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1.5px solid #eef1f7; border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; font-size: .88rem; cursor: grab; }
+.ord-list li.drag { opacity: .4; } .ord-list li.over { border-color: var(--accent); background: #f3f5ff; }
+.ord-list .pos { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.ord-list .nm { width: 110px; font-weight: 700; flex: 0 0 auto; }
+.ord-list .tp { flex: 1; min-width: 0; color: var(--text-muted); font-size: .76rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ord-list .mv { display: flex; gap: 3px; flex: 0 0 auto; }
+.ord-list .mv button { border: 1.5px solid var(--border); background: var(--surface); border-radius: 7px; padding: 4px 8px; cursor: pointer; font-family: inherit; font-size: .8rem; }
+.ord-list .mv input { width: 46px; padding: 4px; border: 1.5px solid var(--border); border-radius: 7px; text-align: center; font-family: inherit; }
 .peer-in { width: 70px; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; }
 </style>
 </head>
@@ -91,6 +103,7 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
       <button class="btn small secondary" onclick="exportCsv()">⬇️ CSV 내보내기</button>
       <button class="btn small secondary" id="dupBtn" onclick="showOverlap()">⚠️ 겹치는 주제</button>
       <button class="btn small secondary" onclick="applyPeerAll()">🗣️ 청취자 점수 일괄 반영</button>
+      <button class="btn small secondary" onclick="openOrder()">🎲 발표 순서</button>
       <a class="btn small secondary" href="board.html" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">👀 학생용 현황</a>
       <span class="dc-muted" id="loadInfo"></span>
     </div>
@@ -104,7 +117,7 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
 <div id="toastBox"></div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=11"></script>
+<script src="session.js?v=12"></script>
 <script>
 const PASSWORD = 'byung0703!';
 const MIN_OK = 700, MAX_OK = 1050, CPM = 300;
@@ -166,7 +179,7 @@ async function start() {
 async function loadAll() {
   const cfg = await getCfg();
   const [r, p, sc, g, lg, pe] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/scripts'), dbGet(base + '/grades'), dbGet(base + '/picksLog').catch(() => null), dbGet(base + '/peer').catch(() => null)]);
-  roster = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v));
+  roster = rosterOf(r);
   picks = p || {}; scripts = sc || {}; grades = g || {}; plog = lg || {}; peer = pe || {};
   $('loadInfo').textContent = '불러옴 ' + new Date().toLocaleTimeString();
 }
@@ -354,7 +367,11 @@ window.openStu = function (i) {
 window.applyPeerOne = function (n) {
   const pc = $('peerCnt'); pc.value = n; pc.dispatchEvent(new Event('input')); pc.dispatchEvent(new Event('change'));
 };
-window.closeModal = function () { $('modal').classList.remove('show'); curIdx = -1; renderGrid(); };
+window.closeModal = function () {
+  if ($('ordBody') && ordDirty && !confirm('저장하지 않은 발표 순서가 있어요. 저장하지 않고 닫을까요?')) return;
+  ordDirty = false;
+  $('modal').classList.remove('show'); curIdx = -1; renderGrid();
+};
 
 function markBtns(cid, p) { document.querySelectorAll(`.pts[data-crit="${cid}"] button:not(.clear)`).forEach(b => b.classList.toggle('on', +b.dataset.p === p)); }
 window.setScore = function (cid, p) { markBtns(cid, p); saveScores({ [cid]: p }); };
@@ -390,7 +407,7 @@ document.addEventListener('keydown', e => {
   if (!$('modal').classList.contains('show')) return;
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (e.key === 'Escape') closeModal();
-  if ($('ovBody')) return;
+  if ($('ovBody') || $('ordBody')) return;
   if (e.key === 'ArrowRight') openStu(curIdx + 1);
   if (e.key === 'ArrowLeft') openStu(curIdx - 1);
 });
@@ -406,6 +423,69 @@ window.showOverlap = function () {
       dups.map(([no, a]) => `<div class="sec"><h4>#${no} ${esc(TOPICS[no - 1].topic)}</h4>${a.map(s => `<div style="display:flex;gap:10px;align-items:center;margin:6px 0"><b style="width:120px">${s.num}번 ${esc(s.name)}</b><button class="mini danger" onclick="clearPick('${s.id}')">선택 해제</button></div>`).join('')}</div>`).join('')
       : '<div class="empty-state">겹치는 주제가 없어요. 👍</div>');
   $('modal').classList.add('show');
+};
+
+/* ---------- 발표 순서 (order/{학년-반} = {ids:[학번...], savedAt}) ----------
+   랜덤은 몇 번이든 돌릴 수 있고, '저장'을 눌러야 확정(학생 「내 발표」 탭에 표시). 저장 후에도 고쳐서 다시 저장 가능. */
+let ordIds = [], ordSaved = null, ordDirty = false, dragFrom = -1;
+function ordKey() { return curKey; }
+window.openOrder = async function () {
+  list = classList(); curIdx = -1;
+  try { ordSaved = await dbGet(base + '/order/' + ordKey()); } catch (e) { alert(e.message); return; }
+  const ids = list.map(s => s.id);
+  if (ordSaved && Array.isArray(ordSaved.ids)) {
+    ordIds = ordSaved.ids.filter(id => ids.includes(id));
+    ids.forEach(id => { if (!ordIds.includes(id)) ordIds.push(id); }); // 저장 뒤 명단이 바뀐 경우 새 학생은 맨 뒤
+  } else ordIds = ids.slice();
+  ordDirty = !!(ordSaved && ordSaved.ids && ordSaved.ids.join() !== ordIds.join());
+  renderOrder();
+  $('modal').classList.add('show');
+};
+function renderOrder() {
+  const st = ordDirty ? '<span class="ord-state dirty">✏️ 저장 안 됨</span>' : ordSaved ? `<span class="ord-state saved">✅ 저장됨 ${fmtT(ordSaved.savedAt)}</span>` : '<span class="ord-state none">아직 저장한 순서 없음 (번호순)</span>';
+  const byId = Object.fromEntries(list.map(s => [s.id, s]));
+  $('modalBody').innerHTML = `<div class="mhead" id="ordBody"><h3>🎲 발표 순서 <span class="dc-muted" style="font-size:.8rem">· ${curKey.replace('-', '학년 ')}반 ${ordIds.length}명</span></h3>${st}<button class="btn small secondary" onclick="closeModal()">닫기</button></div>
+    <div class="sec"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn small" style="width:auto;margin:0" onclick="shuffleOrder()">🎲 랜덤 돌리기</button>
+      <button class="btn small" style="width:auto;margin:0;background:#2f9e44" onclick="saveOrder()">💾 저장 (확정)</button>
+      <button class="btn small secondary" style="width:auto;margin:0" onclick="resetOrder('saved')" ${ordSaved ? '' : 'disabled'}>↩️ 저장된 순서로</button>
+      <button class="btn small secondary" style="width:auto;margin:0" onclick="resetOrder('num')">🔢 번호순</button>
+    </div><p class="hint" style="margin:8px 0 0">랜덤은 몇 번이든 다시 돌릴 수 있어요. <b>저장을 눌러야 확정</b>되고 학생 「내 발표」 탭에 내 순서가 보여요. 줄을 끌어서 옮기거나 ▲▼, 칸에 순서 번호를 넣어 조정한 뒤 다시 저장하면 돼요.</p></div>
+    <ol class="ord-list" id="ordList">${ordIds.map((id, i) => { const s = byId[id], p = picks[id]; return `<li draggable="true" data-i="${i}">
+      <span class="pos">${i + 1}</span><span class="nm">${s.num}번 ${esc(s.name)}</span><span class="tp">${p ? esc(p.topic) : '(주제 미정)'}</span>
+      <span class="mv"><button onclick="moveOrd(${i},${i - 1})" ${i === 0 ? 'disabled' : ''}>▲</button><button onclick="moveOrd(${i},${i + 1})" ${i === ordIds.length - 1 ? 'disabled' : ''}>▼</button>
+      <input type="number" min="1" max="${ordIds.length}" placeholder="${i + 1}" title="옮길 순서 번호" onchange="moveOrd(${i}, this.value - 1)"></span></li>`; }).join('')}</ol>`;
+  document.querySelectorAll('#ordList li').forEach(li => {
+    const i = +li.dataset.i;
+    li.addEventListener('dragstart', () => { dragFrom = i; li.classList.add('drag'); });
+    li.addEventListener('dragend', () => li.classList.remove('drag'));
+    li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('over'); });
+    li.addEventListener('dragleave', () => li.classList.remove('over'));
+    li.addEventListener('drop', e => { e.preventDefault(); li.classList.remove('over'); if (dragFrom >= 0) moveOrd(dragFrom, i); dragFrom = -1; });
+  });
+}
+function markOrdDirty() { ordDirty = !ordSaved || !ordSaved.ids || ordSaved.ids.join() !== ordIds.join(); }
+window.moveOrd = function (from, to) {
+  to = Math.max(0, Math.min(ordIds.length - 1, Math.round(+to)));
+  if (isNaN(to) || from === to) { renderOrder(); return; }
+  const [x] = ordIds.splice(from, 1); ordIds.splice(to, 0, x);
+  markOrdDirty(); renderOrder();
+};
+window.shuffleOrder = function () {
+  for (let i = ordIds.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ordIds[i], ordIds[j]] = [ordIds[j], ordIds[i]]; }
+  markOrdDirty(); renderOrder();
+};
+window.resetOrder = function (mode) {
+  const ids = list.map(s => s.id);
+  if (mode === 'saved' && ordSaved) { ordIds = ordSaved.ids.filter(id => ids.includes(id)); ids.forEach(id => { if (!ordIds.includes(id)) ordIds.push(id); }); }
+  else ordIds = ids.slice();
+  markOrdDirty(); renderOrder();
+};
+window.saveOrder = async function () {
+  if (!confirm(`${curKey.replace('-', '학년 ')}반 발표 순서를 이대로 저장할까요?\n저장하면 학생 「내 발표」 탭에 순서가 보여요.`)) return;
+  const rec = { ids: ordIds.slice(), savedAt: Date.now() };
+  try { await dbPut(base + '/order/' + ordKey(), rec); ordSaved = rec; ordDirty = false; renderOrder(); toast('✅ 발표 순서를 저장했어요'); }
+  catch (e) { alert('저장 실패: ' + e.message); }
 };
 
 /* ---------- CSV ---------- */

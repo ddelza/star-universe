@@ -75,7 +75,7 @@
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetBody"></div></div>
 <div id="toastBox"></div>
 
-<script src="session.js?v=11"></script>
+<script src="session.js?v=12"></script>
 <script>
 const me = requireLogin();
 const $ = id => document.getElementById(id);
@@ -194,7 +194,7 @@ $('q').addEventListener('input', e => { query = e.target.value; renderList(); })
     const cfg = await getCfg(); base = await basePath();
     const [r, p, m, rv] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/peer/' + me.id), dbGet(base + '/peerRecv/' + me.id).catch(() => null)]);
     recv = rv || {};
-    mates = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v))
+    mates = rosterOf(r)
       .filter(s => s.id !== me.id && String(s.grade) === String(me.grade) && String(s.ban) === String(me.ban))
       .sort((a, b) => a.num - b.num);
     picks = p || {}; mine = m || {};

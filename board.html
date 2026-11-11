@@ -17,7 +17,7 @@
 </div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=11"></script>
+<script src="session.js?v=12"></script>
 <script>
 const me = requireLogin();
 let roster = [], picks = {}, status = {}, scripts = null, curKey = '', base = '';
@@ -78,7 +78,7 @@ window.onBan = function () { curKey = document.getElementById('banSel').value; r
     const jobs = [dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/status')];
     if (me.isTeacher) jobs.push(dbGet(base + '/scripts'));
     const [r, p, st, sc] = await Promise.all(jobs);
-    roster = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v));
+    roster = rosterOf(r);
     picks = p || {}; status = st || {}; scripts = sc || null;
     let keys = [...new Set(roster.map(s => s.grade + '-' + s.ban))];
     if (!me.isTeacher) keys = keys.filter(k => k.split('-')[0] === String(me.grade));

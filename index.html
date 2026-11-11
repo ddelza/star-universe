@@ -69,7 +69,7 @@
   </div>
 </div>
 
-<script src="session.js?v=11"></script>
+<script src="session.js?v=12"></script>
 <script>
 function setErr(m) {
   const el = document.getElementById('loginError');
@@ -94,7 +94,7 @@ window.onLogin = async function () {
       const t = { id, name, isTeacher: true };
       setStudent(t); return enterMain(t);
     }
-    const rec = await dbGet(`years/${cfg.year}/students/${id}`);
+    const rec = EXCLUDED_IDS.includes(id) ? null : await dbGet(`years/${cfg.year}/students/${id}`);
     if (!rec || String(rec.name).trim() !== name) return setErr('학번 또는 이름이 일치하지 않아요. 다시 확인해 주세요.');
     const s = { id, name: rec.name, grade: rec.grade, ban: rec.ban, num: rec.num };
     setStudent(s); enterMain(s);
