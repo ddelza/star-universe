@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청취자 평가</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="pres.css?v=11">
+<style>
+.prog { padding: 14px 16px; }
+.prog .top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.prog .big { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+.prog .pbar { height: 10px; background: #eef1f7; border-radius: 8px; overflow: hidden; margin: 8px 0 6px; position: relative; }
+.prog .pbar i { display: block; height: 100%; background: linear-gradient(90deg, #748ffc, #4c6ef5); border-radius: 8px; transition: width .3s; }
+.prog .pbar b { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,.18); }
+.steps { display: flex; gap: 4px; flex-wrap: wrap; font-size: .72rem; color: var(--text-muted); }
+.steps span { background: #f2f4fa; border-radius: 6px; padding: 2px 7px; }
+.steps span.on { background: var(--accent); color: #fff; font-weight: 700; }
+.fcard { display: flex; gap: 12px; align-items: center; background: var(--surface); border: 2px solid transparent; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); cursor: pointer; }
+.fcard:active { transform: scale(.99); }
+.fcard.done { border-color: #b2f2bb; background: #f4fdf5; }
+.fcard .num { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: .95rem; }
+.fcard.done .num { background: #d3f9d8; color: #2b8a3e; }
+.fcard .body { flex: 1; min-width: 0; }
+.fcard .nm { font-weight: 800; font-size: 1rem; }
+.fcard .tp { font-size: .8rem; color: var(--text-muted); margin-top: 2px; line-height: 1.45; }
+.fcard .st { flex: 0 0 auto; font-size: .74rem; font-weight: 700; padding: 4px 9px; border-radius: 8px; background: var(--accent); color: #fff; }
+.fcard.done .st { background: #2f9e44; }
+/* 작성 창 */
+.sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: flex-end; justify-content: center; z-index: 60; }
+.sheet-bg.show { display: flex; }
+.sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 16px 16px 24px; }
+@media (min-width: 700px) { .sheet-bg { align-items: center; } .sheet { border-radius: 18px; } }
+.sheet .shead { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.sheet .shead h3 { flex: 1; margin: 0; font-size: 1.05rem; }
+.sheet .x { border: none; background: #eef1f7; border-radius: 10px; padding: 8px 12px; font-size: .9rem; cursor: pointer; font-family: inherit; }
+.q-title { font-weight: 800; font-size: .92rem; margin: 14px 0 4px; }
+.q-title small { display: block; font-weight: 400; color: var(--text-muted); font-size: .76rem; margin-top: 2px; }
+.sheet textarea { min-height: 110px; }
+.cnt { text-align: right; font-size: .72rem; color: var(--text-muted); }
+.savenote { font-size: .76rem; color: var(--text-muted); text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header"><h1>🗣️ 청취자 평가</h1><p id="who"></p></div>
+  <div id="nav" class="nav"></div>
+
+  <div class="notice">
+    친구 발표를 듣고 <b>친구 이름을 검색</b>해서 카드를 눌러 평가를 써요.<br>
+    ① <b>기억에 남는 키워드와 개념</b> ② <b>발표 태도 칭찬 · 인상 깊은 장면</b>을 적으면 돼요.<br>
+    <span style="color:var(--text-muted)">우리 반 친구를 몇 명이나 평가했는지가 <b>⑤ 청취자 평가 제공하기(5점)</b> 점수가 돼요.</span>
+  </div>
+
+  <div class="card prog" id="prog"></div>
+
+  <input type="text" id="q" class="searchbox" placeholder="🔍 친구 이름 검색 (예: 김민)">
+  <div class="count-line" id="countLine"></div>
+  <div id="list"><div class="loading-state">불러오는 중...</div></div>
+</div>
+
+<div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetBody"></div></div>
+<div id="toastBox"></div>
+
+<script src="session.js?v=11"></script>
+<script>
+const me = requireLogin();
+const $ = id => document.getElementById(id);
+let base = '', mates = [], picks = {}, mine = {}, query = '', cur = null;
+
+function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toastBox').appendChild(el); setTimeout(() => el.remove(), 2600); }
+const draftKey = to => 'sciPeerDraft_' + me.id + '_' + to;
+function getDraft(to) { try { return JSON.parse(localStorage.getItem(draftKey(to)) || 'null'); } catch (e) { return null; } }
+function setDraft(to, d) { try { localStorage.setItem(draftKey(to), JSON.stringify(d)); } catch (e) {} }
+function delDraft(to) { try { localStorage.removeItem(draftKey(to)); } catch (e) {} }
+
+// 청취자 평가 점수: 평가할 수 있는 친구(학급 인원 − 나) 중 몇 %를 평가했는지
+function scoreOf(pct) { return pct >= 90 ? 5 : pct >= 70 ? 4 : pct >= 50 ? 3 : pct >= 30 ? 2 : 1; }
+
+function renderProg() {
+  const total = mates.length, done = mates.filter(s => mine[s.id]).length;
+  const pct = total ? Math.round(done / total * 100) : 0, sc = scoreOf(pct);
+  const need = p => Math.ceil(total * p / 100);
+  $('prog').innerHTML = `<div class="top"><div><b>내가 쓴 청취자 평가</b></div><div><span class="big">${done}</span> / ${total}명 <b style="color:var(--accent)">(${pct}%)</b></div></div>
+    <div class="pbar"><i style="width:${pct}%"></i>${[30, 50, 70, 90].map(p => `<b style="left:${p}%"></b>`).join('')}</div>
+    <div class="steps">${[[90, 5], [70, 4], [50, 3], [30, 2]].map(([p, s]) => `<span class="${sc === s ? 'on' : ''}">${need(p)}명↑ ${s}점</span>`).join('')}<span class="${sc === 1 ? 'on' : ''}">그 아래 1점</span></div>`;
+}
+
+function renderList() {
+  const q = query.trim();
+  const items = mates.filter(s => !q || s.name.includes(q) || String(s.num) === q);
+  $('countLine').textContent = q ? `"${q}" 검색 결과 ${items.length}명` : `우리 반 친구 ${items.length}명`;
+  $('list').innerHTML = items.length ? items.map(s => {
+    const p = picks[s.id], d = !!mine[s.id];
+    return `<div class="fcard ${d ? 'done' : ''}" onclick="openSheet('${s.id}')">
+      <div class="num">${s.num}</div>
+      <div class="body"><div class="nm">${esc(s.name)}</div><div class="tp">${p ? esc(p.topic) : '(주제 미정)'}</div></div>
+      <div class="st">${d ? '✅ 작성함' : '평가 쓰기'}</div></div>`;
+  }).join('') : '<div class="empty-state">이름이 맞는 친구가 없어요.</div>';
+}
+
+window.openSheet = function (to) {
+  const s = mates.find(x => x.id === to); if (!s) return;
+  cur = s;
+  const saved = mine[to] || {}, dr = getDraft(to);
+  const useDraft = dr && (!saved.ts || dr.t > saved.ts);
+  const kw = useDraft ? dr.kw : (saved.kw || ''), pr = useDraft ? dr.praise : (saved.praise || '');
+  const p = picks[to];
+  $('sheetBody').innerHTML = `<div class="shead"><h3>${s.num}번 ${esc(s.name)} 발표 평가</h3><button class="x" onclick="closeSheet()">닫기</button></div>
+    ${p ? `<div class="topic-card" style="padding:12px 14px;margin:0"><div class="tc-top"><span class="tag ${p.unit === '별과 우주' ? 'a' : 'b'}">${esc(p.unit)}</span></div><div class="tc-topic" style="font-size:.92rem">${esc(p.topic)}</div></div>` : ''}
+    <div class="q-title">1. 기억에 남는 키워드와 개념<small>발표에서 새로 알게 됐거나 기억에 남는 낱말·개념을 쓰고, 무슨 뜻인지 간단히 적어요.</small></div>
+    <textarea id="fKw" maxlength="600" placeholder="예) 연주 시차 — 지구가 공전하면서 가까운 별이 조금씩 움직여 보이는 현상. 이걸로 별까지 거리를 잴 수 있다는 게 신기했다.">${esc(kw)}</textarea>
+    <div class="cnt" id="cKw"></div>
+    <div class="q-title">2. 발표 태도 칭찬 · 인상 깊은 장면<small>친구의 발표에서 좋았던 점을 구체적으로 칭찬해 주세요. (목소리, 눈 맞춤, 자료, 예시, 질문 등)</small></div>
+    <textarea id="fPr" maxlength="600" placeholder="예) 대본을 거의 안 보고 청중을 보며 말해서 집중이 잘 됐다. 별 사진을 크게 띄워 비교해 준 장면이 인상 깊었다.">${esc(pr)}</textarea>
+    <div class="cnt" id="cPr"></div>
+    <div class="error-msg" id="fErr"></div>
+    <button class="btn" id="fBtn" onclick="submitPeer()">${saved.ts ? '수정해서 저장' : '평가 저장하기'}</button>
+    <div class="savenote" id="fNote">${saved.ts ? '저장한 평가예요. 고치고 다시 저장할 수 있어요.' : '쓰는 내용은 이 기기에 임시 보관돼요.'}</div>`;
+  $('sheet').classList.add('show');
+  const upd = () => {
+    $('cKw').textContent = $('fKw').value.trim().length + '자'; $('cPr').textContent = $('fPr').value.trim().length + '자';
+    setDraft(to, { kw: $('fKw').value, praise: $('fPr').value, t: Date.now() });
+  };
+  $('fKw').addEventListener('input', upd); $('fPr').addEventListener('input', upd);
+  $('cKw').textContent = kw.trim().length + '자'; $('cPr').textContent = pr.trim().length + '자';
+  if (useDraft && saved.ts) $('fNote').textContent = '✏️ 저장 안 한 고친 내용을 불러왔어요. 저장을 눌러 주세요.';
+};
+window.closeSheet = function () { $('sheet').classList.remove('show'); cur = null; };
+
+window.submitPeer = async function () {
+  if (!cur) return;
+  const kw = $('fKw').value.trim(), praise = $('fPr').value.trim(), err = $('fErr');
+  const fail = m => { err.textContent = m; err.classList.add('show'); };
+  err.classList.remove('show');
+  if (kw.length < 5) return fail('1번 기억에 남는 키워드와 개념을 조금 더 써 주세요. (5자 이상)');
+  if (praise.length < 10) return fail('2번 칭찬 · 인상 깊은 장면을 조금 더 구체적으로 써 주세요. (10자 이상)');
+  const to = cur;
+  const rec = { from: me.id, fromName: me.name, fromNum: me.num, to: to.id, toName: to.name, toNum: to.num, grade: me.grade, ban: me.ban, kw, praise, ts: Date.now() };
+  if (mine[to.id] && mine[to.id].createdAt) rec.createdAt = mine[to.id].createdAt; else rec.createdAt = rec.ts;
+  const btn = $('fBtn'); btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    await dbPut(base + '/peer/' + me.id + '/' + to.id, rec);
+    mine[to.id] = rec; delDraft(to.id);
+    closeSheet(); renderProg(); renderList();
+    toast(`✅ ${to.name} 친구 평가를 저장했어요!`);
+  } catch (e) { btn.disabled = false; btn.textContent = '다시 저장하기'; fail('저장에 실패했어요. 인터넷을 확인하고 다시 눌러 주세요. (쓴 내용은 남아 있어요)'); }
+};
+
+$('q').addEventListener('input', e => { query = e.target.value; renderList(); });
+
+(async function init() {
+  if (!me) return;
+  $('who').textContent = whoLabel(me); renderNav('peer');
+  if (me.isTeacher) {
+    $('prog').style.display = 'none'; $('q').style.display = 'none';
+    $('list').innerHTML = '<div class="empty-state">교사 계정은 청취자 평가를 쓰지 않아요.<br>학생들이 쓴 평가는 <a href="teacher.html">교사용 채점 페이지</a>에서 볼 수 있어요.</div>';
+    return;
+  }
+  try {
+    const cfg = await getCfg(); base = await basePath();
+    const [r, p, m] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/peer/' + me.id)]);
+    mates = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v))
+      .filter(s => s.id !== me.id && String(s.grade) === String(me.grade) && String(s.ban) === String(me.ban))
+      .sort((a, b) => a.num - b.num);
+    picks = p || {}; mine = m || {};
+  } catch (e) { $('list').innerHTML = '<div class="empty-state">불러오지 못했어요. 새로고침해 주세요.</div>'; return; }
+  renderProg(); renderList();
+})();
+</script>
+</body>
+</html>

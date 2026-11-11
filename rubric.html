@@ -78,9 +78,9 @@
 
   <div class="card">
     <h2>⑤ 청취자 평가 제공하기 (5점)</h2>
-    <p class="hint">발표 당일, 친구들의 발표를 듣고 <b>동료평가</b>를 얼마나 작성했는지로 평가해요.</p>
+    <p class="hint">발표 당일, 친구들의 발표를 듣고 <b>🗣️ 청취자 평가</b> 탭에서 동료평가를 얼마나 작성했는지로 평가해요.</p>
     <table class="rubric">
-      <tr><th>동료평가 작성 비율<br>(학급 인원 수 기준)</th><th style="width:44px">점수</th></tr>
+      <tr><th>동료평가 작성 비율<br>(나를 뺀 학급 인원 기준)</th><th style="width:44px">점수</th></tr>
       <tr><td><b>90% 이상</b></td><td class="sc">5</td></tr>
       <tr><td><b>70% 이상</b></td><td class="sc">4</td></tr>
       <tr><td><b>50% 이상</b></td><td class="sc">3</td></tr>
@@ -91,7 +91,7 @@
   </div>
 </div>
 
-<script src="session.js?v=10"></script>
+<script src="session.js?v=11"></script>
 <script>
 const me = requireLogin();
 if (me) { document.getElementById('who').textContent = whoLabel(me); renderNav('rubric'); }

@@ -90,6 +90,7 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
       <button class="btn small secondary" onclick="reload()">🔄 새로고침</button>
       <button class="btn small secondary" onclick="exportCsv()">⬇️ CSV 내보내기</button>
       <button class="btn small secondary" id="dupBtn" onclick="showOverlap()">⚠️ 겹치는 주제</button>
+      <button class="btn small secondary" onclick="applyPeerAll()">🗣️ 청취자 점수 일괄 반영</button>
       <a class="btn small secondary" href="board.html" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">👀 학생용 현황</a>
       <span class="dc-muted" id="loadInfo"></span>
     </div>
@@ -103,7 +104,7 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
 <div id="toastBox"></div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=10"></script>
+<script src="session.js?v=11"></script>
 <script>
 const PASSWORD = 'byung0703!';
 const MIN_OK = 700, MAX_OK = 1050, CPM = 300;
@@ -119,11 +120,11 @@ const CRIT = [
   { id: 'concept', short: '개념전달', label: '③-2 과학적 개념 효과적으로 전달하기', max: 2, min: 0, rubric: [[2, '성량·말하기 속도·시선 처리·몸짓 등 비언어적 표현을 능숙하게 활용해 몰입을 이끌고 설득력 있게 전달함'], [1, '차분하고 명확하게 전달하나, 비언어적 표현이 일부 미흡함'], [0, '음성이 작거나 청중과의 상호작용(시선 처리 등)이 전혀 없음']] },
   { id: 'time', short: '시간관리', label: '③-3 전략적으로 시간 관리하기', max: 2, min: 1, rubric: [[2, '발표 시간 2분 30초 ~ 4분 사이'], [1, '범위를 벗어남 (최하점 1점)']] },
   { id: 'mem', short: '내재화', label: '④ 지식 내재화하기', max: 2, min: 1, rubric: [[2, '대본을 보지 않고 발표함'], [1, '대본을 보며 발표함']] },
-  { id: 'peer', short: '청취자', label: '⑤ 청취자 평가 제공하기', max: 5, min: 1, rubric: [[5, '동료평가 작성 90% 이상 (학급 인원 수 기준)'], [4, '70% 이상'], [3, '50% 이상'], [2, '30% 이상'], [1, '30% 미만']] },
+  { id: 'peer', short: '청취자', label: '⑤ 청취자 평가 제공하기', max: 5, min: 1, rubric: [[5, '동료평가 작성 90% 이상 (나를 뺀 학급 인원 기준)'], [4, '70% 이상'], [3, '50% 이상'], [2, '30% 이상'], [1, '30% 미만']] },
 ];
 const COLS = [{ id: 'prep', short: '준비', max: 5 }, ...CRIT.filter(c => c.grp !== 'prep').map(c => ({ id: c.id, short: c.short, max: c.max }))];
 
-let roster = [], picks = {}, scripts = {}, grades = {}, plog = {}, base = '', curKey = '', list = [], curIdx = -1;
+let roster = [], picks = {}, scripts = {}, grades = {}, plog = {}, peer = {}, base = '', curKey = '', list = [], curIdx = -1;
 
 function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toastBox').appendChild(el); setTimeout(() => el.remove(), 2200); }
 const has = v => v !== undefined && v !== null && v !== '';
@@ -164,9 +165,9 @@ async function start() {
 }
 async function loadAll() {
   const cfg = await getCfg();
-  const [r, p, sc, g, lg] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/scripts'), dbGet(base + '/grades'), dbGet(base + '/picksLog').catch(() => null)]);
+  const [r, p, sc, g, lg, pe] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/scripts'), dbGet(base + '/grades'), dbGet(base + '/picksLog').catch(() => null), dbGet(base + '/peer').catch(() => null)]);
   roster = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v));
-  picks = p || {}; scripts = sc || {}; grades = g || {}; plog = lg || {};
+  picks = p || {}; scripts = sc || {}; grades = g || {}; plog = lg || {}; peer = pe || {};
   $('loadInfo').textContent = '불러옴 ' + new Date().toLocaleTimeString();
 }
 window.reload = async function () { await loadAll(); renderGrid(); toast('새로 불러왔어요'); };
@@ -213,12 +214,28 @@ function dupsOf(id) {
   return Object.values(picks).filter(o => o && o.id !== id && String(o.grade) === String(p.grade) && String(o.ban) === String(p.ban) && o.no === p.no);
 }
 
+/* ---------- 청취자 평가 (peer/{쓴 학생}/{받은 학생}) ---------- */
+// 같은 반 친구에게 쓴 평가 수. 분모는 나를 뺀 학급 인원.
+function wroteN(id) { const ids = new Set(list.map(s => s.id)); return Object.keys(peer[id] || {}).filter(to => to !== id && ids.has(to)).length; }
+function received(id) { const out = []; Object.entries(peer).forEach(([from, m]) => { if (from !== id && m && m[id]) out.push(m[id]); }); return out.sort((a, b) => (a.fromNum || 0) - (b.fromNum || 0)); }
+function peerScore(n, size) { const pct = size ? n / size * 100 : 0; return pct >= 90 ? 5 : pct >= 70 ? 4 : pct >= 50 ? 3 : pct >= 30 ? 2 : 1; }
+window.applyPeerAll = async function () {
+  list = classList(); const size = list.length - 1;
+  const changes = list.map(s => ({ s, n: wroteN(s.id) })).filter(({ s, n }) => { const g = grades[s.id] || {}; return g.peerCount !== n || +g.peer !== peerScore(n, size); });
+  if (!changes.length) { toast('바뀔 점수가 없어요'); return; }
+  if (!confirm(`${curKey.replace('-', '학년 ')}반 ${changes.length}명의 청취자 평가 점수를 사이트 기록(쓴 평가 수 ÷ ${size}명)으로 반영할까요?\n\n` + changes.map(({ s, n }) => `${s.num}번 ${s.name}: ${n}명 → ${peerScore(n, size)}점`).join('\n'))) return;
+  try {
+    for (const { s, n } of changes) await saveGrade(s, { peerCount: n, peer: peerScore(n, size) });
+    renderGrid(); toast(`✅ ${changes.length}명 반영했어요`);
+  } catch (e) { alert('저장 실패: ' + e.message); renderGrid(); }
+};
+
 /* ---------- 메인 표: 작성 현황(글자수) + 점수 ---------- */
 function renderGrid() {
   list = classList();
   let h = `<tr><th rowspan="2">번호</th><th rowspan="2">이름</th><th rowspan="2">주제</th>` +
-    `<th colspan="5" class="grp sep">작성 현황 (글자수)</th><th colspan="${COLS.length + 1}" class="grp sep">점수</th><th rowspan="2">메모</th></tr>` +
-    `<tr><th class="sep">선정 이유</th><th style="min-width:150px">대본 <small>공백 포함</small></th><th>자료 출처</th><th>AI</th><th>캔바</th>` +
+    `<th colspan="6" class="grp sep">작성 현황 (글자수)</th><th colspan="${COLS.length + 1}" class="grp sep">점수</th><th rowspan="2">메모</th></tr>` +
+    `<tr><th class="sep">선정 이유</th><th style="min-width:150px">대본 <small>공백 포함</small></th><th>자료 출처</th><th>AI</th><th>캔바</th><th>청취자 평가<small>쓴 / 받은</small></th>` +
     COLS.map((c, i) => `<th${i === 0 ? ' class="sep"' : ''}>${c.short}<small>/${c.max}</small></th>`).join('') + `<th>합계<small>/20</small></th></tr>`;
   list.forEach((s, i) => {
     const sc = scripts[s.id] || {}, g = grades[s.id];
@@ -231,6 +248,7 @@ function renderGrid() {
       `<td class="${no ? 'n-ok' : 'n-none'}">${no || '—'}</td>` +
       `<td>${sc.aiUsed === 'yes' ? 'AI 사용' : sc.aiUsed === 'no' ? '안 씀' : '<span class="n-none">—</span>'}</td>` +
       `<td>${sc.canva ? `<a class="ok-dot" href="${esc(sc.canva)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">✔</a>` : '<span class="no-dot">○</span>'}</td>` +
+      `<td><span class="${wroteN(s.id) ? 'n-ok' : 'n-none'}">${wroteN(s.id)}</span> / <span style="color:var(--text-muted)">${received(s.id).length}</span></td>` +
       COLS.map((c, k) => { const v = colVal(g, c.id); return `<td class="sc${v == null ? ' empty' : ''}${k === 0 ? ' sep' : ''}">${v == null ? '-' : v}</td>`; }).join('') +
       `<td class="total${t.done ? '' : ' part'}">${t.any ? t.sum : ''}</td><td class="memo">${g && g.memo ? esc(g.memo) : ''}</td></tr>`;
   });
@@ -239,7 +257,7 @@ function renderGrid() {
   const avg = id => { const v = list.map(s => colVal(grades[s.id], id)).filter(x => x != null); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(1) : '-'; };
   h += `<tr class="sum"><td></td><td class="name">${list.length}명</td><td style="text-align:left">선택 ${cnt(s => picks[s.id])}명</td>` +
     `<td class="sep">${cnt(s => len((scripts[s.id] || {}).reason))}</td><td style="text-align:left">${scr.length}명 · 평균 ${scr.length ? Math.round(scr.reduce((a, b) => a + b, 0) / scr.length) : 0}자</td>` +
-    `<td>${cnt(s => len((scripts[s.id] || {}).sources))}</td><td></td><td>${cnt(s => (scripts[s.id] || {}).canva)}</td>` +
+    `<td>${cnt(s => len((scripts[s.id] || {}).sources))}</td><td></td><td>${cnt(s => (scripts[s.id] || {}).canva)}</td><td title="평가를 1개 이상 쓴 학생">${cnt(s => wroteN(s.id))}명</td>` +
     COLS.map((c, k) => `<td${k === 0 ? ' class="sep"' : ''} title="평균">${avg(c.id)}</td>`).join('') + `<td title="채점 완료 인원">${cnt(s => totalOf(grades[s.id]).done)}명</td><td></td></tr>`;
   $('grid').innerHTML = h;
   const restorable = cnt(s => !picks[s.id] && candOf(s.id));
@@ -310,9 +328,12 @@ window.openStu = function (i) {
   h += '</div>';
 
   // ⑤ 청취자 평가
-  const size = list.length;
+  const size = list.length - 1, wn = wroteN(s.id), wp = size ? Math.round(wn / size * 100) : 0;
   h += `<div class="sec"><h4>⑤ 청취자 평가 제공하기</h4>` +
-    critRow(C('peer'), g, `<b>동료평가 작성 수</b><div>작성 <input type="number" class="peer-in" id="peerCnt" min="0" max="${size}" value="${has(g.peerCount) ? g.peerCount : ''}"> / 학급 ${size}명 <span class="dc-muted" id="peerPct"></span></div><div class="dc-muted" style="font-size:.76rem">숫자를 넣고 칸을 벗어나면 비율로 점수가 자동 선택·저장돼요.</div>`) + '</div>';
+    critRow(C('peer'), g, `<b>사이트 기록</b><div>같은 반 친구 <strong>${wn}</strong> / ${size}명에게 평가를 씀 (${wp}%) → <strong>${peerScore(wn, size)}점</strong> <button class="mini" onclick="applyPeerOne(${wn})">이 기록으로 채점</button></div>` +
+      `<b>동료평가 작성 수 (직접 입력)</b><div>작성 <input type="number" class="peer-in" id="peerCnt" min="0" max="${size}" value="${has(g.peerCount) ? g.peerCount : ''}"> / ${size}명 <span class="dc-muted" id="peerPct"></span></div><div class="dc-muted" style="font-size:.76rem">종이로 받은 평가가 있으면 숫자를 고쳐 넣으세요. 칸을 벗어나면 비율로 점수가 자동 선택·저장돼요.</div>`) + '</div>';
+  const rv = received(s.id);
+  h += `<div class="sec"><h4>💬 이 학생이 받은 청취자 평가 (${rv.length}개)</h4>` + (rv.length ? rv.map(r => `<div style="border-top:1px dashed #dde3ea;padding:8px 0;font-size:.84rem;line-height:1.6"><b style="color:var(--accent)">${r.fromNum}번 ${esc(r.fromName)}</b> <span class="dc-muted">${fmtT(r.ts)}</span><div><strong>🔑 키워드·개념</strong> <span style="white-space:pre-wrap">${esc(r.kw)}</span></div><div><strong>👏 칭찬·인상 깊은 장면</strong> <span style="white-space:pre-wrap">${esc(r.praise)}</span></div></div>`).join('') : '<div class="dc-muted" style="font-size:.84rem">아직 받은 평가가 없어요.</div>') + '</div>';
 
   h += `<div class="sec"><h4>📝 메모</h4><input class="memo-in" id="memoIn" value="${esc(g.memo || '')}" placeholder="채점 메모 (Enter 또는 칸을 벗어나면 저장)"><div class="savestate" id="saveState"></div></div>`;
   $('modalBody').innerHTML = h;
@@ -326,9 +347,12 @@ window.openStu = function (i) {
   pc.addEventListener('input', showPct);
   pc.addEventListener('change', () => {
     if (pc.value === '') { saveScores({ peerCount: null }); return; }
-    const pct = +pc.value / size * 100, p = pct >= 90 ? 5 : pct >= 70 ? 4 : pct >= 50 ? 3 : pct >= 30 ? 2 : 1;
+    const p = peerScore(+pc.value, size);
     markBtns('peer', p); saveScores({ peerCount: +pc.value, peer: p });
   });
+};
+window.applyPeerOne = function (n) {
+  const pc = $('peerCnt'); pc.value = n; pc.dispatchEvent(new Event('input')); pc.dispatchEvent(new Event('change'));
 };
 window.closeModal = function () { $('modal').classList.remove('show'); curIdx = -1; renderGrid(); };
 
@@ -336,19 +360,23 @@ function markBtns(cid, p) { document.querySelectorAll(`.pts[data-crit="${cid}"] 
 window.setScore = function (cid, p) { markBtns(cid, p); saveScores({ [cid]: p }); };
 window.applySuggest = function () { const sg = suggest(list[curIdx].id); ['pr', 'ps', 'po'].forEach(k => markBtns(k, sg[k])); saveScores(sg); };
 
-async function saveScores(patch) {
-  const s = list[curIdx]; if (!s) return;
-  const st = $('saveState');
+async function saveGrade(s, patch) {
   const rec = Object.assign({ id: s.id, name: s.name, num: s.num }, grades[s.id] || {}, patch);
   Object.keys(rec).forEach(k => { if (rec[k] === null || rec[k] === '') delete rec[k]; });
   const t = totalOf(rec);
   rec.prep = prepOf(rec); if (rec.prep == null) delete rec.prep;
   rec.total = t.done ? t.sum : null; if (rec.total == null) delete rec.total;
   rec.updatedAt = Date.now();
+  await dbPut(base + '/grades/' + s.id, rec);
+  grades[s.id] = rec;
+  return rec;
+}
+async function saveScores(patch) {
+  const s = list[curIdx]; if (!s) return;
+  const st = $('saveState');
   if (st) st.textContent = '저장 중...';
   try {
-    await dbPut(base + '/grades/' + s.id, rec);
-    grades[s.id] = rec;
+    const rec = await saveGrade(s, patch), t = totalOf(rec);
     if ($('mTotal')) $('mTotal').textContent = t.any ? t.sum + (t.done ? '' : ' (채점 중)') : '-';
     if ($('prepTot')) $('prepTot').textContent = (prepOf(rec) != null ? prepOf(rec) : '-') + ' / 5';
     if (st) st.textContent = `✓ 저장됨 ${new Date().toLocaleTimeString()}`;
@@ -383,12 +411,12 @@ window.showOverlap = function () {
 /* ---------- CSV ---------- */
 window.exportCsv = function () {
   list = classList();
-  const head = ['반', '번호', '학번', '이름', '단원', '키워드', '주제', '선정이유(자)', '대본(자)', '출처(자)', 'AI', '캔바', '선정이유(1)', '대본(2)', '출처(2)', '준비하기(5)', '의사소통(2)', '설명전략(2)', '개념전달(2)', '시간관리(2)', '내재화(2)', '동료평가 작성수', '청취자평가(5)', '합계(20)', '메모'];
+  const head = ['반', '번호', '학번', '이름', '단원', '키워드', '주제', '선정이유(자)', '대본(자)', '출처(자)', 'AI', '캔바', '선정이유(1)', '대본(2)', '출처(2)', '준비하기(5)', '의사소통(2)', '설명전략(2)', '개념전달(2)', '시간관리(2)', '내재화(2)', '동료평가 작성수', '사이트 기록 쓴 평가', '받은 평가', '청취자평가(5)', '합계(20)', '메모'];
   const q = x => '"' + String(x == null ? '' : x).replace(/"/g, '""') + '"';
   const rows = list.map(s => {
     const p = picks[s.id] || {}, sc = scripts[s.id] || {}, g = grades[s.id] || {}, t = totalOf(g);
     return [curKey, s.num, s.id, s.name, p.unit, p.kw, p.topic, len(sc.reason), len(sc.script), len(sc.sources), sc.aiUsed === 'yes' ? '사용' : sc.aiUsed === 'no' ? '안 씀' : '', sc.canva || '',
-      g.pr, g.ps, g.po, prepOf(g), g.comm, g.strat, g.concept, g.time, g.mem, g.peerCount, g.peer, t.done ? t.sum : '', g.memo].map(q).join(',');
+      g.pr, g.ps, g.po, prepOf(g), g.comm, g.strat, g.concept, g.time, g.mem, g.peerCount, wroteN(s.id), received(s.id).length, g.peer, t.done ? t.sum : '', g.memo].map(q).join(',');
   });
   const blob = new Blob(['﻿' + [head.map(q).join(','), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);

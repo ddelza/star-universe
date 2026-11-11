@@ -100,7 +100,7 @@
   };
 
   // ---- 페이지 이동 링크에 빌드 번호를 붙여 오래된 캐시 페이지가 뜨지 않게 함 ----
-  var BUILD = '14';
+  var BUILD = '15';
   window.bustLinks = function () {
     document.querySelectorAll('a[href]').forEach(function (a) {
       var h = a.getAttribute('href');
@@ -112,8 +112,8 @@
   // ---- 상단 메뉴 ----
   window.renderNav = function (active) {
     var s = window.getStudent();
-    var items = [['index.html', '🏠 홈', 'home'], ['pick.html', '📌 주제', 'pick'], ['my.html', '📝 내 발표', 'my'], ['board.html', '👀 현황', 'board'], ['rubric.html', '📋 평가기준', 'rubric'], ['concepts.html', '📖 기본 개념', 'concepts']];
-    if (s && s.isTeacher) items = items.filter(function (i) { return i[2] !== 'pick' && i[2] !== 'my'; });
+    var items = [['index.html', '🏠 홈', 'home'], ['pick.html', '📌 주제', 'pick'], ['my.html', '📝 내 발표', 'my'], ['board.html', '👀 현황', 'board'], ['peer.html', '🗣️ 청취자 평가', 'peer'], ['rubric.html', '📋 평가기준', 'rubric'], ['concepts.html', '📖 기본 개념', 'concepts']];
+    if (s && s.isTeacher) items = items.filter(function (i) { return i[2] !== 'pick' && i[2] !== 'my' && i[2] !== 'peer'; });
     var el = document.getElementById('nav');
     if (!el) return;
     el.innerHTML = items.map(function (i) {

@@ -62,13 +62,14 @@
 
     <a class="menu-btn" href="pick.html" id="mPick">📌 발표 주제 고르기</a>
     <a class="menu-btn" href="my.html" id="mMy">📝 내 발표 준비 (대본 · 캔바 링크)</a>
+    <a class="menu-btn" href="peer.html" id="mPeer">🗣️ 청취자 평가 (친구 발표 평가하기)</a>
     <a class="menu-btn" href="concepts.html">📖 별과 우주 기본 개념 <span style="font-size:.78rem">(⭐ 보너스: 거리 단위 정리)</span></a>
     <a class="menu-btn" href="board.html">👀 우리 반 · 다른 반 주제 보기</a>
     <p style="text-align:center;margin-top:24px"><a href="teacher.html" style="font-size:0.75rem;color:var(--text-muted)">교사용</a></p>
   </div>
 </div>
 
-<script src="session.js?v=10"></script>
+<script src="session.js?v=11"></script>
 <script>
 function setErr(m) {
   const el = document.getElementById('loginError');
@@ -117,6 +118,7 @@ async function enterMain(s) {
     card.innerHTML = '<h2>교사 계정</h2><p class="hint" style="margin:0">전체 현황 페이지에서 반별 선택 상황과 겹치는 주제를 볼 수 있어요.</p>';
     document.getElementById('mPick').style.display = 'none';
     document.getElementById('mMy').style.display = 'none';
+    document.getElementById('mPeer').style.display = 'none';
     return;
   }
   card.innerHTML = '<p class="hint" style="margin:0">내 선택을 확인하는 중...</p>';
