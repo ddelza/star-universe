@@ -39,6 +39,11 @@
 .sheet textarea { min-height: 110px; }
 .cnt { text-align: right; font-size: .72rem; color: var(--text-muted); }
 .savenote { font-size: .76rem; color: var(--text-muted); text-align: center; margin-top: 6px; }
+.rcard { background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); border-left: 4px solid #748ffc; }
+.rcard .who { font-size: .76rem; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; }
+.rcard .lbl { font-size: .76rem; font-weight: 800; color: var(--accent); margin-top: 8px; }
+.rcard .lbl:first-of-type { margin-top: 0; }
+.rcard .tx { font-size: .9rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>
@@ -52,11 +57,19 @@
     <span style="color:var(--text-muted)">우리 반 친구를 몇 명이나 평가했는지가 <b>⑤ 청취자 평가 제공하기(5점)</b> 점수가 돼요.</span>
   </div>
 
-  <div class="card prog" id="prog"></div>
+  <div class="tabs" id="tabs"></div>
 
-  <input type="text" id="q" class="searchbox" placeholder="🔍 친구 이름 검색 (예: 김민)">
-  <div class="count-line" id="countLine"></div>
-  <div id="list"><div class="loading-state">불러오는 중...</div></div>
+  <div id="writeArea">
+    <div class="card prog" id="prog"></div>
+    <input type="text" id="q" class="searchbox" placeholder="🔍 친구 이름 검색 (예: 김민)">
+    <div class="count-line" id="countLine"></div>
+    <div id="list"><div class="loading-state">불러오는 중...</div></div>
+  </div>
+
+  <div id="recvArea" style="display:none">
+    <div class="small-note" style="margin:0 2px 10px">친구들이 내 발표를 듣고 남긴 평가예요. <b>누가 썼는지는 보이지 않아요.</b></div>
+    <div id="recvList"></div>
+  </div>
 </div>
 
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetBody"></div></div>
@@ -66,7 +79,24 @@
 <script>
 const me = requireLogin();
 const $ = id => document.getElementById(id);
-let base = '', mates = [], picks = {}, mine = {}, query = '', cur = null;
+let base = '', mates = [], picks = {}, mine = {}, recv = {}, query = '', cur = null, view = 'write';
+
+function renderTabs() {
+  const n = Object.keys(recv).length;
+  $('tabs').innerHTML = `<button class="tab-btn ${view === 'write' ? 'active' : ''}" onclick="setView('write')">✍️ 평가 쓰기</button>` +
+    `<button class="tab-btn ${view === 'recv' ? 'active' : ''}" onclick="setView('recv')">💌 내가 받은 평가 (${n})</button>`;
+  $('writeArea').style.display = view === 'write' ? 'block' : 'none';
+  $('recvArea').style.display = view === 'recv' ? 'block' : 'none';
+}
+window.setView = function (v) { view = v; renderTabs(); if (v === 'recv') renderRecv(); };
+// 받은 평가: peerRecv/{받은 학번}/{쓴 학번} 에는 이름을 저장하지 않음 → 화면에서도 익명
+function renderRecv() {
+  const arr = Object.values(recv).filter(r => r && (r.kw || r.praise)).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  $('recvList').innerHTML = arr.length ? arr.map((r, i) => `<div class="rcard"><div class="who">🙂 익명의 친구 ${arr.length - i}</div>
+    <div class="lbl">🔑 기억에 남는 키워드와 개념</div><div class="tx">${esc(r.kw)}</div>
+    <div class="lbl">👏 칭찬 · 인상 깊은 장면</div><div class="tx">${esc(r.praise)}</div></div>`).join('')
+    : '<div class="empty-state">아직 받은 평가가 없어요.<br>발표가 끝나면 친구들의 평가가 여기에 모여요.</div>';
+}
 
 function toast(msg) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toastBox').appendChild(el); setTimeout(() => el.remove(), 2600); }
 const draftKey = to => 'sciPeerDraft_' + me.id + '_' + to;
@@ -140,7 +170,10 @@ window.submitPeer = async function () {
   if (mine[to.id] && mine[to.id].createdAt) rec.createdAt = mine[to.id].createdAt; else rec.createdAt = rec.ts;
   const btn = $('fBtn'); btn.disabled = true; btn.textContent = '저장 중...';
   try {
-    await dbPut(base + '/peer/' + me.id + '/' + to.id, rec);
+    await Promise.all([
+      dbPut(base + '/peer/' + me.id + '/' + to.id, rec),
+      dbPut(base + '/peerRecv/' + to.id + '/' + me.id, { kw, praise, ts: rec.ts })
+    ]);
     mine[to.id] = rec; delDraft(to.id);
     closeSheet(); renderProg(); renderList();
     toast(`✅ ${to.name} 친구 평가를 저장했어요!`);
@@ -159,13 +192,15 @@ $('q').addEventListener('input', e => { query = e.target.value; renderList(); })
   }
   try {
     const cfg = await getCfg(); base = await basePath();
-    const [r, p, m] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/peer/' + me.id)]);
+    const [r, p, m, rv] = await Promise.all([dbGet('years/' + cfg.year + '/students'), dbGet(base + '/picks'), dbGet(base + '/peer/' + me.id), dbGet(base + '/peerRecv/' + me.id).catch(() => null)]);
+    recv = rv || {};
     mates = Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v))
       .filter(s => s.id !== me.id && String(s.grade) === String(me.grade) && String(s.ban) === String(me.ban))
       .sort((a, b) => a.num - b.num);
     picks = p || {}; mine = m || {};
   } catch (e) { $('list').innerHTML = '<div class="empty-state">불러오지 못했어요. 새로고침해 주세요.</div>'; return; }
-  renderProg(); renderList();
+  if (new URLSearchParams(location.search).get('view') === 'recv') view = 'recv';
+  renderTabs(); renderProg(); renderList(); if (view === 'recv') renderRecv();
 })();
 </script>
 </body>
