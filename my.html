@@ -257,7 +257,22 @@ function orderHtml() {
   if (i < 0) return '';
   return `<div class="card" style="padding:14px 16px;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#4c6ef5,#748ffc);color:#fff">
     <div style="font-size:2rem;font-weight:900;line-height:1;min-width:52px;text-align:center">${i + 1}<span style="font-size:.9rem">번째</span></div>
-    <div><b style="font-size:1rem">🎤 내 발표 순서</b><div style="font-size:.8rem;opacity:.9">우리 반 ${ids.length}명 중 ${i + 1}번째로 발표해요.${i > 0 ? ' (내 앞 순서: ' + i + '명)' : ' 첫 번째 발표자예요!'}</div></div></div>`;
+    <div style="flex:1;min-width:0"><b style="font-size:1rem">🎤 내 발표 순서</b><div style="font-size:.8rem;opacity:.9">우리 반 ${ids.length}명 중 ${i + 1}번째로 발표해요.${i > 0 ? '' : ' 첫 번째 발표자예요!'}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;font-size:.82rem">
+        ${i > 0 ? `<span style="background:rgba(255,255,255,.22);border-radius:8px;padding:4px 9px">⬅️ 내 앞: <b>${ordWho(ids[i - 1])}</b></span>` : ''}
+        ${i < ids.length - 1 ? `<span style="background:rgba(255,255,255,.12);border-radius:8px;padding:4px 9px;opacity:.9">내 뒤: ${ordWho(ids[i + 1])}</span>` : '<span style="background:rgba(255,255,255,.12);border-radius:8px;padding:4px 9px">마지막 발표자예요</span>'}
+      </div></div></div>`;
+}
+let ordNames = {};
+function ordWho(id) { const s = ordNames[id]; return s ? s.num + '번 ' + esc(s.name) : '…'; }
+async function loadOrdNames() {
+  if (!ordRec || !Array.isArray(ordRec.ids)) return;
+  const ids = ordRec.ids.filter(id => !EXCLUDED_IDS.includes(id)), i = ids.indexOf(me.id);
+  if (i < 0) return;
+  const cfg = await getCfg();
+  const want = [ids[i - 1], ids[i + 1]].filter(Boolean);
+  const recs = await Promise.all(want.map(id => dbGet(`years/${cfg.year}/students/${id}`).catch(() => null)));
+  want.forEach((id, k) => { if (recs[k]) ordNames[id] = recs[k]; });
 }
 
 async function showDups(all) {
@@ -277,6 +292,7 @@ window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); 
     base = await basePath();
     const [p, s, all, od] = await Promise.all([dbGet(base + '/picks/' + me.id), dbGet(base + '/scripts/' + me.id), dbGet(base + '/picks'), dbGet(base + '/order/' + me.grade + '-' + me.ban).catch(() => null)]);
     pick = p; saved = s; ordRec = od;
+    try { await loadOrdNames(); } catch (e) {}
     if (!pick) { try { cand = pickCandidate(await dbGet(base + '/picksLog/' + me.id), saved); } catch (e) {} }
     render();
     showDups(all);
