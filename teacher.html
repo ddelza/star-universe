@@ -117,7 +117,7 @@ table.grid { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
 <div id="toastBox"></div>
 
 <script src="topics.js?v=1"></script>
-<script src="session.js?v=12"></script>
+<script src="session.js?v=13"></script>
 <script>
 const PASSWORD = 'byung0703!';
 const MIN_OK = 700, MAX_OK = 1050, CPM = 300;
@@ -246,7 +246,7 @@ function peerScore(n, size) { const pct = size ? n / size * 100 : 0; return pct 
 // '↺ 자동' 버튼으로 peerManual을 지우면 다시 자동 점수로 돌아간다.
 function classmatesOf(s) { return roster.filter(o => String(o.grade) === String(s.grade) && String(o.ban) === String(s.ban)); }
 function peerAutoOf(s) {
-  const cls = classmatesOf(s), ids = new Set(cls.map(o => o.id)), size = cls.length - 1;
+  const cls = classmatesOf(s), ids = new Set(cls.map(o => o.id)), size = peerDenom(s.grade, s.ban, cls.length);
   const n = Object.keys(peer[s.id] || {}).filter(to => to !== s.id && ids.has(to)).length;
   return { n, size, score: peerScore(n, size) };
 }
@@ -369,7 +369,7 @@ window.openStu = function (i) {
   h += '</div>';
 
   // ⑤ 청취자 평가
-  const size = list.length - 1, wn = wroteN(s.id), wp = size ? Math.round(wn / size * 100) : 0;
+  const size = peerDenom(s.grade, s.ban, list.length), wn = wroteN(s.id), wp = size ? Math.min(100, Math.round(wn / size * 100)) : 0;
   h += `<div class="sec"><h4>⑤ 청취자 평가 제공하기</h4>` +
     critRow(C('peer'), g, `<b>사이트 기록</b><div>같은 반 친구 <strong>${wn}</strong> / ${size}명에게 평가를 씀 (${wp}%) → <strong>${peerScore(wn, size)}점</strong></div>` +
       `<div id="peerMode" style="margin:6px 0 8px">${peerModeHtml(g)}</div>` +

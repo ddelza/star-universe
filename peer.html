@@ -75,7 +75,7 @@
 <div class="sheet-bg" id="sheet" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="sheetBody"></div></div>
 <div id="toastBox"></div>
 
-<script src="session.js?v=12"></script>
+<script src="session.js?v=13"></script>
 <script>
 const me = requireLogin();
 const $ = id => document.getElementById(id);
@@ -108,8 +108,8 @@ function delDraft(to) { try { localStorage.removeItem(draftKey(to)); } catch (e)
 function scoreOf(pct) { return pct >= 90 ? 5 : pct >= 70 ? 4 : pct >= 50 ? 3 : pct >= 30 ? 2 : 1; }
 
 function renderProg() {
-  const total = mates.length, done = mates.filter(s => mine[s.id]).length;
-  const pct = total ? Math.round(done / total * 100) : 0, sc = scoreOf(pct);
+  const total = peerDenom(me.grade, me.ban, mates.length + 1), done = mates.filter(s => mine[s.id]).length;
+  const pct = total ? Math.min(100, Math.round(done / total * 100)) : 0, sc = scoreOf(pct);
   const need = p => Math.ceil(total * p / 100);
   $('prog').innerHTML = `<div class="top"><div><b>내가 쓴 청취자 평가</b></div><div><span class="big">${done}</span> / ${total}명 <b style="color:var(--accent)">(${pct}%)</b></div></div>
     <div class="pbar"><i style="width:${pct}%"></i>${[30, 50, 70, 90].map(p => `<b style="left:${p}%"></b>`).join('')}</div>
